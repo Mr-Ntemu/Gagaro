@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Suivi commande {{ order.reference }} | Gagaro{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/reviews.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="row mb-5 align-items-center">
+        <div class="col-md-8">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'reviews:order_history' %}">Mes commandes</a></li>
+                    <li class="breadcrumb-item active">Suivi {{ order.reference }}</li>
+                </ol>
+            </nav>
+            <h1 class="h2 mb-0">Suivi de commande</h1>
+            <p class="text-muted">Passée le {{ order.created_at|date:"d F Y à H:i" }}</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <span class="badge fs-6 bg-{% if order.status == 'delivered' %}success{% elif order.status == 'cancelled' %}danger{% else %}secondary{% endif %} rounded-pill px-4 py-2">
+                {{ order.get_status_display }}
+            </span>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Timeline -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm p-4 mb-4">
+                <h3 class="h5 mb-4">Progression</h3>
+                
+                <ul class="tracking-timeline">
+                    {% for step in timeline %}
+                        <li class="timeline-item {% if step.completed %}completed{% endif %} {% if step.active %}active{% endif %}">
+                            <div class="timeline-icon">
+                                {% if step.completed %}
+                                    <i class="bi bi-check-lg"></i>
+                                {% else %}
+                                    <i class="bi {{ step.icon }}"></i>
+                                {% endif %}
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-label">{{ step.label }}</div>
+                                <div class="timeline-desc">{{ step.description }}</div>
+                                {% if step.date %}
+                                    <div class="timeline-date">{{ step.date|date:"d M Y, H:i" }}</div>
+                                {% endif %}
+                                
+                                {% if step.key == 'in_craft' and order.items.all.0.customization_session %}
+                                    <div class="mt-2 p-2 bg-light rounded d-flex align-items-center gap-2">
+                                        <img src="{{ order.items.all.0.customization_session.thumbnail.url }}" 
+                                             alt="Design personnalisé" 
+                                             style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                        <span class="small">Design personnalisé en cours de création</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+
+                {% if estimated_delivery %}
+                    <div class="alert alert-info mt-3 mb-0 d-flex align-items-center">
+                        <i class="bi bi-info-circle-fill me-3 fs-4"></i>
+                        <div>
+                            <strong>Estimation de livraison :</strong><br>
+                            Entre le {{ estimated_delivery }}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Articles -->
+            <div class="card border-0 shadow-sm p-4 mb-4">
+                <h3 class="h5 mb-4">Articles commandés</h3>
+                <div class="table-responsive">
+                    <table class="table table-borderless align-middle">
+                        <thead>
+                            <tr class="text-muted small border-bottom">
+                                <th colspan="2">Produit</th>
+                                <th>Prix</th>
+                                <th class="text-center">Qté</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.items.all %}
+                                <tr class="border-bottom">
+                                    <td style="width: 60px;">
+                                        <img src="{{ item.product.images.first.image.url }}" 
+                                             alt="{{ item.product.title }}"
+                                             class="rounded" 
+                                             style="width: 50px; height: 50px; object-fit: cover;">
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold">{{ item.product.title }}</div>
+                                        {% if item.customization_session %}
+                                            <span class="badge bg-gold-soft text-kadoya-primary small">Personnalisé</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item.unit_price|floatformat:0 }}</td>
+                                    <td class="text-center">x{{ item.quantity }}</td>
+                                    <td class="text-end fw-bold">{{ item.subtotal|floatformat:0 }} FCFA</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="4" class="text-end text-muted">Sous-total :</td>
+                                <td class="text-end">{{ order.total_amount|floatformat:0 }} FCFA</td>
+                            </tr>
+                            {% if order.shipping_cost %}
+                                <tr>
+                                    <td colspan="4" class="text-end text-muted">Livraison :</td>
+                                    <td class="text-end">{{ order.shipping_cost|floatformat:0 }} FCFA</td>
+                                </tr>
+                            {% endif %}
+                            <tr class="border-top">
+                                <td colspan="4" class="text-end fw-bold">Total :</td>
+                                <td class="text-end fw-bold h5 text-primary">{{ order.total_amount|floatformat:0 }} FCFA</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Avis à laisser -->
+            {% if order.status == 'delivered' and can_review %}
+                <div class="card border-0 shadow-sm p-4" id="reviews">
+                    <h3 class="h5 mb-4">Laisser un avis</h3>
+                    <p class="text-muted small mb-4">Partagez votre expérience sur les articles reçus.</p>
+                    
+                    <div class="row g-3">
+                        {% for item in reviewable_items %}
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center p-3 border rounded">
+                                    <img src="{{ item.product.images.first.image.url }}" 
+                                         alt="{{ item.product.title }}"
+                                         class="rounded me-3" 
+                                         style="width: 60px; height: 60px; object-fit: cover;">
+                                    <div class="flex-grow-1">
+                                        <div class="fw-bold mb-1 text-truncate" style="max-width: 150px;">{{ item.product.title }}</div>
+                                        <a href="{% url 'reviews:review_create' product_slug=item.product.slug %}" class="btn btn-sm btn-outline-primary py-1">
+                                            Noter l'article
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar Infos -->
+        <div class="col-lg-4">
+            <!-- Livraison -->
+            <div class="card border-0 shadow-sm p-4 mb-4">
+                <h3 class="h6 mb-3 text-uppercase fw-bold text-muted">Adresse de livraison</h3>
+                <div class="d-flex gap-3">
+                    <i class="bi bi-geo-alt text-primary fs-4"></i>
+                    <div>
+                        <p class="mb-1 fw-bold">{{ order.user.full_name }}</p>
+                        <p class="mb-1">{{ order.shipping_address }}</p>
+                        <p class="mb-0 small text-muted">{{ order.shipping_phone }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Résumé Paiement -->
+            <div class="card border-0 shadow-sm p-4">
+                <h3 class="h6 mb-3 text-uppercase fw-bold text-muted">Paiement</h3>
+                {% with last_payment=order.payment_attempts.last %}
+                    {% if last_payment %}
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="bi bi-credit-card text-success"></i>
+                            <span>{{ last_payment.get_payment_method_display }}</span>
+                        </div>
+                        <div class="small text-muted">
+                            Transaction : {{ last_payment.transaction_id|default:"N/A" }}
+                        </div>
+                    {% else %}
+                        <p class="text-warning small mb-0">En attente de paiement</p>
+                    {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

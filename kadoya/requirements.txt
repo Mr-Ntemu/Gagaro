@@ -1,0 +1,8 @@
+Django>=5.0
+django[argon2]
+python-decouple
+whitenoise
+Pillow
+requests>=2.31.0
+django-crispy-forms
+crispy-bootstrap5

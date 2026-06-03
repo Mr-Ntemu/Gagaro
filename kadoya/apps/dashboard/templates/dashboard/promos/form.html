@@ -1,0 +1,122 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}{{ action }} code promo — Gagaro Admin{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'dashboard:promo_list' %}" class="text-decoration-none small text-muted">
+        <i class="bi bi-arrow-left me-1"></i> Retour à la liste
+    </a>
+    <h2 class="h4 mb-0 fw-bold mt-2">{{ action }} un code promotionnel</h2>
+</div>
+
+<form method="post" class="row g-4">
+    {% csrf_token %}
+    
+    <!-- Info Principale -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+            <h5 class="fw-bold mb-4">Détails du code</h5>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small">Code (Unique)</label>
+                    {{ form.code }}
+                    {% if form.code.errors %}<div class="text-danger extra-small">{{ form.code.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small">Occasion</label>
+                    {{ form.occasion }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-bold small">Texte de la bannière (site-wide)</label>
+                    {{ form.banner_text }}
+                    <div class="form-text extra-small">Ce texte apparaîtra en haut de toutes les pages du site.</div>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-bold small">Description interne</label>
+                    {{ form.description }}
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+            <h5 class="fw-bold mb-4">Valeur & Conditions</h5>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small">Type de réduction</label>
+                    {{ form.discount_type }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small">Valeur</label>
+                    {{ form.discount_value }}
+                    <div class="form-text extra-small">Ex: 20 pour 20% ou 5000 pour 5000 FCFA.</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small">Montant min commande (FCFA)</label>
+                    {{ form.min_order_amount }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small">Plafond de réduction (FCFA)</label>
+                    {{ form.max_discount_cap }}
+                    <div class="form-text extra-small">Optionnel. Utile pour les codes en %.</div>
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <h6 class="fw-bold mb-3">Restrictions par catégorie</h6>
+            <div class="row g-2">
+                {% for checkbox in form.applicable_categories %}
+                <div class="col-md-4">
+                    <div class="form-check small">
+                        {{ checkbox.tag }}
+                        <label class="form-check-label" for="{{ checkbox.id_for_label }}">
+                            {{ checkbox.choice_label }}
+                        </label>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="form-text extra-small mt-2">Si aucune case n'est cochée, le code s'applique à tout le catalogue.</div>
+        </div>
+    </div>
+
+    <!-- Sidebar : Validité & Publication -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+            <h5 class="fw-bold mb-4">Validité</h5>
+            <div class="row g-3">
+                <div class="col-12">
+                    <label class="form-label fw-bold small">Date de début</label>
+                    {{ form.valid_from }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-bold small">Date de fin</label>
+                    {{ form.valid_until }}
+                    {% if form.non_field_errors %}<div class="text-danger extra-small mt-1">{{ form.non_field_errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-bold small">Nombre max d'utilisations total</label>
+                    {{ form.max_uses }}
+                    <div class="form-text extra-small">Laisser vide pour illimité.</div>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-bold small">Max par client</label>
+                    {{ form.max_uses_per_user }}
+                </div>
+                <div class="col-12">
+                    <div class="form-check form-switch mt-2">
+                        {{ form.is_active }}
+                        <label class="form-check-label fw-bold small" for="{{ form.is_active.id_for_label }}">Activer immédiatement</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 py-3 rounded-4 fw-bold shadow-sm">
+            {{ action }} le code promo
+        </button>
+        <a href="{% url 'dashboard:promo_list' %}" class="btn btn-link w-100 mt-2 text-muted small text-decoration-none">Annuler</a>
+    </div>
+</form>
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Retraits — Gagaro Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="h4 mb-0 fw-bold">Demandes de Retrait</h2>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">Date</th>
+                    <th>Artisan</th>
+                    <th>Montant</th>
+                    <th>Méthode</th>
+                    <th>Téléphone</th>
+                    <th class="text-end pe-4">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for w in withdrawals %}
+                <tr>
+                    <td class="ps-4 small">{{ w.created_at|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        <div class="small fw-bold">{{ w.artisan.shop_name }}</div>
+                        <div class="extra-small text-muted">Solde dispo : {{ w.artisan.balance|floatformat:0 }} FCFA</div>
+                    </td>
+                    <td class="fw-bold text-primary">{{ w.amount|floatformat:0 }} FCFA</td>
+                    <td><span class="badge bg-light text-dark border">{{ w.get_operator_display }}</span></td>
+                    <td class="small">{{ w.phone }}</td>
+                    <td class="text-end pe-4">
+                        <button class="btn btn-primary btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#processModal{{ w.id }}">Traiter</button>
+                    </td>
+                </tr>
+
+                <!-- Modal de traitement -->
+                <div class="modal fade" id="processModal{{ w.id }}" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-0 shadow rounded-4">
+                            <div class="modal-header border-0 p-4 pb-0">
+                                <h5 class="fw-bold">Traiter le retrait</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <form action="{% url 'dashboard:withdrawal_process' w.id %}" method="post">
+                                {% csrf_token %}
+                                <div class="modal-body p-4">
+                                    <div class="bg-light p-3 rounded-3 mb-4">
+                                        <div class="d-flex justify-content-between small mb-1">
+                                            <span>Montant à verser :</span>
+                                            <span class="fw-bold">{{ w.amount|floatformat:0 }} FCFA</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between small mb-1">
+                                            <span>Bénéficiaire :</span>
+                                            <span class="fw-bold">{{ w.artisan.shop_name }}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between small">
+                                            <span>Destination :</span>
+                                            <span class="fw-bold">{{ w.get_operator_display }} ({{ w.phone }})</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold small">Décision</label>
+                                        <div class="d-flex flex-column gap-2">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="action" value="processed" id="act1{{ w.id }}" required>
+                                                <label class="form-check-label small" for="act1{{ w.id }}">Marquer comme versé (Paiement effectué)</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="action" value="approved" id="act2{{ w.id }}">
+                                                <label class="form-check-label small" for="act2{{ w.id }}">Approuver (En cours de traitement)</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="action" value="rejected" id="act3{{ w.id }}">
+                                                <label class="form-check-label small text-danger" for="act3{{ w.id }}">Rejeter la demande</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-0">
+                                        <label class="form-label fw-bold small">Note interne / motif de rejet</label>
+                                        <textarea name="admin_note" class="form-control" rows="3"></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer border-0 p-4 pt-0">
+                                    <button type="submit" class="btn btn-primary w-100 fw-bold py-2 rounded-3">Enregistrer</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-5 text-muted">Aucune demande de retrait en attente</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

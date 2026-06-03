@@ -1,0 +1,101 @@
+{% extends 'artisan_base.html' %}
+{% load crispy_forms_tags %}
+
+{% block artisan_content %}
+<div class="mb-4">
+    <h1 class="h3">Paramètres de l'atelier</h1>
+    <p class="text-muted">Gérez les informations publiques de votre boutique.</p>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="card shadow-sm border-0 p-4 mb-4">
+                <h5 class="mb-4">Identité de l'atelier</h5>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.shop_name|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.specialties|as_crispy_field }}
+                    </div>
+                    <div class="col-12 mb-3">
+                        {{ form.shop_description|as_crispy_field }}
+                    </div>
+                    <div class="col-12 mb-3">
+                        {{ form.shop_banner|as_crispy_field }}
+                    </div>
+                </div>
+
+                <h5 class="mt-4 mb-4">Localisation</h5>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.city|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.quarter|as_crispy_field }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 p-4 mb-4">
+                <h5 class="mb-4">Informations de paiement (Mobile Money)</h5>
+                <div class="alert alert-info small mb-4">
+                    Ces informations sont utilisées pour le versement automatique de vos commissions.
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.payout_phone|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.payout_operator|as_crispy_field }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-3">
+                <button type="submit" class="btn btn-primary px-5 py-3 fw-bold">Enregistrer les modifications</button>
+                <a href="{% url 'artisan:dashboard' %}" class="btn btn-light px-5 py-3">Annuler</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Aperçu de la carte artisan (Card) -->
+        <div class="card shadow-sm border-0 overflow-hidden">
+            {% if profile.shop_banner %}
+            <img src="{{ profile.shop_banner.url }}" class="card-img-top" style="height:150px; object-fit:cover;" alt="">
+            {% else %}
+            <div class="bg-secondary" style="height:150px;"></div>
+            {% endif %}
+            <div class="card-body text-center" style="margin-top:-40px;">
+                {% if request.user.avatar %}
+                <img src="{{ request.user.avatar.url }}" class="rounded-circle border border-white border-4 shadow-sm mb-3" style="width:80px; height:80px; object-fit:cover;" alt="">
+                {% else %}
+                <img src="/static/img/avatar-default.svg" class="rounded-circle border border-white border-4 shadow-sm mb-3" style="width:80px; height:80px; object-fit:cover;" alt="">
+                {% endif %}
+                <h5 class="card-title mb-1">{{ profile.shop_name }}</h5>
+                <p class="text-muted small mb-3"><i class="bi bi-geo-alt me-1"></i> {{ profile.city|default:'Non précisée' }}</p>
+                
+                <div class="d-flex flex-wrap justify-content-center gap-1 mb-3">
+                    {% for specialty in profile.specialty_list %}
+                    <span class="badge bg-light text-dark border">{{ specialty }}</span>
+                    {% endfor %}
+                </div>
+
+                <hr>
+                <p class="card-text small text-muted text-start">
+                    {{ profile.shop_description|truncatechars:150|default:"Aucune description." }}
+                </p>
+            </div>
+            <div class="card-footer bg-white border-0 py-3 text-center">
+                <span class="badge {% if profile.is_verified %}bg-success{% else %}bg-warning{% endif %}">
+                    {% if profile.is_verified %}Artisan Vérifié{% else %}Vérification en cours{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

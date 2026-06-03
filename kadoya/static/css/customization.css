@@ -1,0 +1,250 @@
+/* === WIZARD LAYOUT === */
+.wizard-container {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  grid-template-rows: auto 1fr;
+  gap: 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.wizard-progress { grid-column: 1 / -1; }
+
+@media (max-width: 992px) {
+  .wizard-container { grid-template-columns: 1fr; }
+  .wizard-preview   { order: -1; }
+}
+
+/* === PROGRESS BAR === */
+.wizard-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 3rem;
+}
+
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.step-circle {
+  width: 45px; height: 45px;
+  border-radius: 50%;
+  background: #f0f0f0;
+  border: 2px solid #e0e0e0;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+  transition: all 0.3s ease;
+  margin-bottom: 0.5rem;
+}
+
+.step-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #888;
+}
+
+.progress-step.active .step-circle {
+  background: var(--kadoya-primary, #1a1a2e);
+  border-color: var(--kadoya-primary, #1a1a2e);
+  color: white;
+  transform: scale(1.1);
+}
+
+.progress-step.active .step-label {
+  color: var(--kadoya-primary, #1a1a2e);
+  font-weight: 700;
+}
+
+.progress-step.completed .step-circle {
+  background: #198754;
+  border-color: #198754;
+  color: white;
+}
+
+.progress-line {
+  flex: 1; height: 3px;
+  background: #f0f0f0;
+  margin: 0 -10px;
+  margin-bottom: 1.5rem;
+  transition: background 0.4s ease;
+}
+.progress-line.completed { background: #198754; }
+
+/* === DROP ZONE === */
+.drop-zone {
+  border: 2px dashed #ccc;
+  border-radius: 12px;
+  padding: 4rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #fafafa;
+}
+
+.drop-zone:hover,
+.drop-zone.drag-active {
+  border-color: #c8963e; /* Kadoya secondary */
+  background: rgba(200, 150, 62, 0.05);
+}
+
+.visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* === LIVE PREVIEW === */
+.wizard-preview {
+  position: sticky;
+  top: 100px;
+  align-self: start;
+}
+
+.preview-frame {
+  background: #1a1a2e; /* Kadoya primary */
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+  aspect-ratio: 4/5;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: all 0.4s ease;
+}
+
+.preview-photo-slot {
+  flex: 1;
+  background: #2a2a4a;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-placeholder {
+    text-align: center;
+}
+
+.preview-engraving {
+  text-align: center;
+  color: #f1f1f1;
+  padding: 12px 4px 0;
+  font-size: 1rem;
+  min-height: 35px;
+  font-style: italic;
+}
+
+.preview-price {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 1.2rem;
+  background: white;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.preview-price strong {
+  color: #c8963e;
+  font-size: 1.6rem;
+}
+
+/* === FRAME CARDS === */
+.frame-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1.25rem;
+}
+
+.frame-card {
+  border: 2px solid #eee;
+  border-radius: 12px;
+  padding: 1.5rem 1rem;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  background: white;
+}
+
+.frame-card:hover { 
+    border-color: #1a1a2e;
+    transform: translateY(-5px);
+}
+
+.frame-card.selected {
+  border-color: #c8963e;
+  background: rgba(200, 150, 62, 0.06);
+}
+
+.frame-card .check-icon {
+  position: absolute;
+  top: 10px; right: 10px;
+  color: #c8963e;
+  font-size: 1.2rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.frame-card.selected .check-icon { opacity: 1; }
+
+.price-extra {
+    font-weight: 700;
+    color: #c8963e;
+    font-size: 0.9rem;
+}
+
+/* === FONT SELECTION === */
+.font-selection {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.font-option {
+    padding: 0.75rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.font-option:hover { background: #f8f9fa; }
+.font-option.selected {
+    border-color: #1a1a2e;
+    background: #e9ecef;
+}
+
+.font-preview {
+    font-size: 1.1rem;
+}
+
+/* === WIZARD STEPS === */
+.wizard-step {
+    display: none;
+    animation: fadeIn 0.4s ease;
+}
+
+.wizard-step.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.text-xs { font-size: 0.75rem; }

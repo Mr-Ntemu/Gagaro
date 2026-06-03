@@ -1,0 +1,135 @@
+/* === CART ITEM === */
+.cart-item {
+  display: grid;
+  grid-template-columns: 100px 1fr auto;
+  gap: 1.5rem;
+  align-items: center;
+  padding: 1.5rem 0;
+  border-bottom: 1px solid #f0ebe4;
+}
+
+.cart-item:last-child { border-bottom: none; }
+
+.cart-item-img {
+  width: 100px; height: 100px;
+  object-fit: cover;
+  border-radius: 12px;
+  background: #f8f9fa;
+}
+
+.bg-soft-secondary { background-color: #e9ecef; }
+
+/* === QUANTITY SELECTOR === */
+.qty-wrapper {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  overflow: hidden;
+  width: fit-content;
+  background: white;
+}
+
+.qty-btn {
+  background: none; border: none;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: #1a1a2e; /* Kadoya primary */
+  transition: all 0.2s ease;
+}
+
+.qty-btn:hover { background: #f8f9fa; }
+
+.qty-input {
+  width: 45px; text-align: center;
+  border: none; border-left: 1px solid #ddd; border-right: 1px solid #ddd;
+  padding: 8px 0;
+  font-weight: 700;
+  background: white;
+}
+
+/* === ORDER SUMMARY === */
+.order-summary-card {
+  background: #fafaf8;
+  border-radius: 16px;
+  padding: 2rem;
+  position: sticky;
+  top: 100px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.summary-total {
+  border-top: 2px solid #1a1a2e;
+  padding-top: 1.25rem;
+  margin-top: 1.25rem;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* === PAYMENT CARDS === */
+.payment-card {
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+  background: white;
+}
+
+.payment-card.selected {
+  border-color: #c8963e; /* Kadoya secondary */
+  background: rgba(200, 150, 62, 0.05);
+}
+
+.payment-card.disabled {
+  opacity: .6; cursor: not-allowed;
+  background: #f8f9fa;
+}
+
+/* === CONFIRMATION CHECKMARK === */
+@keyframes draw-circle {
+  to { stroke-dashoffset: 0; }
+}
+
+.confirm-icon {
+  width: 100px; height: 100px;
+  margin: 0 auto 2rem;
+}
+
+.confirm-icon circle {
+  fill: none;
+  stroke: #198754;
+  stroke-width: 4;
+  stroke-dasharray: 251;
+  stroke-dashoffset: 251;
+  animation: draw-circle 0.6s ease forwards;
+}
+
+.text-xs { font-size: 0.75rem; }
+.max-w-lg { max-width: 32rem; }
+
+@media (max-width: 576px) {
+    .cart-item {
+        grid-template-columns: 80px 1fr;
+        gap: 1rem;
+    }
+    .cart-item-actions {
+        grid-column: 1 / -1;
+        justify-content: space-between !important;
+        margin-top: 0.5rem;
+    }
+    .cart-item-img {
+        width: 80px; height: 80px;
+    }
+}

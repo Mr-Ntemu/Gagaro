@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/masonry.css' %}">
+<link rel="stylesheet" href="{% static 'css/catalogue.css' %}">
+<link rel="stylesheet" href="{% static 'css/recommendations.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="py-5 bg-white mb-4">
+  <div class="container py-5 text-center">
+    <h1 class="display-3 mb-3">L'art de l'émotion en cadre</h1>
+    <p class="lead text-muted mb-4 mx-auto" style="max-width: 600px;">
+      Découvrez nos confections cadeaux uniques et cadres photos artisanaux
+      conçus pour sublimer vos plus beaux souvenirs.
+    </p>
+    <a href="{% url 'catalogue:listing' %}" class="btn btn-kadoya btn-lg px-5">Découvrir le catalogue</a>
+  </div>
+</section>
+
+<!-- Section recommandations personnalisées -->
+<section class="reco-section" id="reco-home" aria-label="Pour vous">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">
+        {% if user.is_authenticated %}
+        Sélectionné pour vous
+        {% else %}
+        Tendances du moment
+        {% endif %}
+      </h2>
+      <a href="{% url 'catalogue:listing' %}" class="btn-text">
+        Voir tout <i class="bi bi-arrow-right"></i>
+      </a>
+    </div>
+
+    {% include 'recommendations/partials/_recommendation_strip.html' with container_id="reco-home-strip" reco_context="home" limit=8 %}
+  </div>
+</section>
+
+<!-- Masonry Grid -->
+<div class="container">
+  <div class="masonry-grid">
+    {% for product in products %}
+    {% include 'catalogue/partials/_product_card.html' with product=product %}
+    {% empty %}
+    <div class="col-12 py-5 text-center">
+      <p class="text-muted">Aucun produit disponible pour le moment.</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/recommendations.js' %}"></script>
+{% endblock %}

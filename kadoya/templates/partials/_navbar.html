@@ -1,0 +1,76 @@
+<nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'core:home' %}">GAGARO</a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'catalogue:listing' %}">Catalogue</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Créer un cadeau</a>
+                </li>
+            </ul>
+
+            <div class="d-flex align-items-center">
+                <!-- Panier -->
+                <a href="{% url 'orders:cart' %}" class="position-relative me-4 text-dark text-decoration-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="9" cy="21" r="1"></circle>
+                        <circle cx="20" cy="21" r="1"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                    <span
+                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">{{ cart_items_count|default:0 }}</span>
+                </a>
+
+                {% if user.is_authenticated %}
+                <div class="dropdown">
+                    <a class="d-flex align-items-center text-decoration-none dropdown-toggle text-dark" href="#"
+                        role="button" data-bs-toggle="dropdown">
+                        {% if user.avatar %}
+                        <img src="{{ user.avatar.url }}" alt="{{ user.first_name }}" width="32" height="32"
+                            class="rounded-circle me-2">
+                        {% else %}
+                        <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-2"
+                            style="width: 32px; height: 32px;">
+                            {{ user.first_name|first }}
+                        </div>
+                        {% endif %}
+                        <span>{{ user.first_name }}</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3">
+                        <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">Mon Profil</a></li>
+                        <li><a class="dropdown-item" href="#">Mes Commandes</a></li>
+                        {% if user.is_artisan %}
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="{% url 'artisan:dashboard' %}">Dashboard Artisan</a></li>
+                        {% endif %}
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <form action="{% url 'accounts:logout' %}" method="POST" class="px-3">
+                                {% csrf_token %}
+                                <button type="submit"
+                                    class="btn btn-link text-danger p-0 text-decoration-none w-100 text-start">Déconnexion</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+                {% else %}
+                <a href="{% url 'accounts:login' %}"
+                    class="btn btn-link text-dark text-decoration-none me-2">Connexion</a>
+                <a href="{% url 'accounts:register' %}" class="btn btn-kadoya">Inscription</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>

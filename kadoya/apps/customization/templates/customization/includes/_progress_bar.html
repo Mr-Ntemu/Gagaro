@@ -1,0 +1,20 @@
+<div class="wizard-progress">
+  {% for step_num, step_label in steps %}
+    <div class="progress-step {% if session.current_step == step_num %}active{% endif %}
+                               {% if session.current_step > step_num %}completed{% endif %}">
+      <div class="step-circle">
+        {% if session.current_step > step_num %}
+          <i class="bi bi-check-lg"></i>
+        {% else %}
+          {{ step_num }}
+        {% endif %}
+      </div>
+      <span class="step-label">{{ step_label }}</span>
+    </div>
+    {% if not forloop.last %}
+      <div class="progress-line
+           {% if session.current_step > step_num %}completed{% endif %}">
+      </div>
+    {% endif %}
+  {% endfor %}
+</div>

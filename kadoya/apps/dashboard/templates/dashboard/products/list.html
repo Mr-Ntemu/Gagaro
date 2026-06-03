@@ -1,0 +1,145 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Catalogue — Gagaro Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="h4 mb-0 fw-bold">Gestion du Catalogue & Stock</h2>
+</div>
+
+<!-- Filtres -->
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body p-4">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <select name="status" class="form-select">
+                    <option value="">Tous les statuts</option>
+                    {% for val, label in status_choices %}
+                    <option value="{{ val }}" {% if request.GET.status == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Filtrer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">Produit</th>
+                    <th>Artisan</th>
+                    <th>Prix</th>
+                    <th>Stock</th>
+                    <th>Statut</th>
+                    <th class="text-end pe-4">Action Stock</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr id="product-row-{{ product.id }}">
+                    <td class="ps-4">
+                        <div class="d-flex align-items-center gap-3">
+                            {% with img=product.images.first %}
+                            <img src="{% if img %}{{ img.image.url }}{% else %}{% static 'img/placeholder.png' %}{% endif %}" 
+                                 class="rounded" style="width: 45px; height: 45px; object-fit: cover;">
+                            {% endwith %}
+                            <div>
+                                <div class="small fw-bold">{{ product.title }}</div>
+                                <div class="extra-small text-muted">{{ product.category.name }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="small">{{ product.artisan.shop_name }}</span></td>
+                    <td class="small fw-bold">{{ product.price|floatformat:0 }} FCFA</td>
+                    <td class="stock-cell">
+                        <span class="badge {% if product.stock_quantity <= 3 %}bg-danger{% else %}bg-light text-dark{% endif %} qty-label">
+                            {{ product.stock_quantity }}
+                        </span>
+                    </td>
+                    <td class="status-cell">
+                        <span class="badge rounded-pill 
+                            {% if product.status == 'active' %}bg-success
+                            {% elif product.status == 'draft' %}bg-warning text-dark
+                            {% elif product.status == 'sold_out' %}bg-danger
+                            {% else %}bg-secondary{% endif %} status-badge">
+                            {{ product.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="text-end pe-4">
+                        <form class="stock-update-form d-flex justify-content-end gap-2" data-id="{{ product.id }}">
+                            {% csrf_token %}
+                            <input type="hidden" name="product_id" value="{{ product.id }}">
+                            <input type="number" name="new_quantity" value="{{ product.stock_quantity }}" 
+                                   class="form-control form-control-sm text-center" style="width: 70px;" min="0">
+                            <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check2"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-5 text-muted">Aucun produit trouvé</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if is_paginated %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Précédent</a></li>
+        {% endif %}
+        <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}</span></li>
+        {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Suivant</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.querySelectorAll('.stock-update-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const row = document.getElementById(`product-row-${this.dataset.id}`);
+            
+            fetch("{% url 'dashboard:update_stock' %}", {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if(data.success) {
+                    const qtyLabel = row.querySelector('.qty-label');
+                    qtyLabel.innerText = data.new_quantity;
+                    if(data.new_quantity <= 3) {
+                        qtyLabel.classList.remove('bg-light', 'text-dark');
+                        qtyLabel.classList.add('bg-danger');
+                    } else {
+                        qtyLabel.classList.add('bg-light', 'text-dark');
+                        qtyLabel.classList.remove('bg-danger');
+                    }
+
+                    const statusBadge = row.querySelector('.status-badge');
+                    statusBadge.innerText = data.status_label;
+                    statusBadge.className = 'badge rounded-pill status-badge ' + 
+                        (data.new_status === 'active' ? 'bg-success' : 
+                         data.new_status === 'sold_out' ? 'bg-danger' : 'bg-secondary');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

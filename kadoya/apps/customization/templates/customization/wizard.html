@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Personnaliser - {{ product.title }} | Gagaro{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/customization.css' %}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="wizard-container">
+
+  <!-- Barre de progression -->
+  {% include 'customization/includes/_progress_bar.html' %}
+
+  <!-- Zone d'aperçu persistante (droite sur desktop, en haut sur mobile) -->
+  <div class="wizard-preview" id="live-preview">
+    <div class="preview-frame" id="preview-frame">
+      <div class="preview-photo-slot" id="preview-photo">
+        {% if session.uploaded_photo_thumb %}
+          <img src="{{ session.uploaded_photo_thumb.url }}" alt="Votre photo" style="width:100%;height:100%;object-fit:cover;">
+        {% else %}
+          <div class="preview-placeholder">
+            <i class="bi bi-image" style="font-size: 3rem; color: #ccc;"></i>
+            <p>Votre photo apparaîtra ici</p>
+          </div>
+        {% endif %}
+      </div>
+      <div class="preview-engraving" id="preview-engraving-text" 
+           style="{% if session.font %}font-family: {{ session.font.css_family }};{% endif %}">
+        {{ session.engraving_text }}
+      </div>
+    </div>
+    <div class="preview-price" id="preview-price">
+      <span>Prix total : </span>
+      <strong id="price-value">{{ session.computed_price|default:product.effective_price|floatformat:0 }}</strong> <strong>FCFA</strong>
+    </div>
+  </div>
+
+  <!-- Étapes du wizard -->
+  <div class="wizard-steps">
+    <div class="wizard-step {% if session.current_step == 1 %}active{% endif %}" id="step-1">
+      {% include 'customization/partials/_step_upload.html' %}
+    </div>
+    <div class="wizard-step {% if session.current_step == 2 %}active{% endif %}" id="step-2">
+      {% include 'customization/partials/_step_frame.html' %}
+    </div>
+    <div class="wizard-step {% if session.current_step == 3 %}active{% endif %}" id="step-3">
+      {% include 'customization/partials/_step_engraving.html' %}
+    </div>
+    <div class="wizard-step {% if session.current_step == 4 %}active{% endif %}" id="step-4">
+      {% include 'customization/partials/_step_preview.html' %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const productSlug = "{{ product.slug }}";
+  const uploadUrl = "{% url 'customization:upload_photo' product.slug %}";
+  const frameUrl = "{% url 'customization:select_frame' product.slug %}";
+  const engravingUrl = "{% url 'customization:save_engraving' product.slug %}";
+  const completeUrl = "{% url 'customization:complete' product.slug %}";
+  
+  function getCsrfToken() {
+    return "{{ csrf_token }}";
+  }
+
+  function showStep(stepNum) {
+    document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active'));
+    document.getElementById(`step-${stepNum}`).classList.add('active');
+    
+    // Update progress bar
+    document.querySelectorAll('.progress-step').forEach((s, idx) => {
+      const sNum = idx + 1;
+      if (sNum < stepNum) {
+        s.classList.add('completed');
+        s.classList.remove('active');
+      } else if (sNum === stepNum) {
+        s.classList.add('active');
+        s.classList.remove('completed');
+      } else {
+        s.classList.remove('active', 'completed');
+      }
+    });
+    
+    document.querySelectorAll('.progress-line').forEach((l, idx) => {
+      if (idx + 1 < stepNum) l.classList.add('completed');
+      else l.classList.remove('completed');
+    });
+  }
+
+  function updateProgressBar(percent) {
+    const bar = document.getElementById('upload-progress-bar');
+    if (bar) {
+      bar.style.width = percent + '%';
+      bar.innerText = percent + '%';
+    }
+  }
+
+  function enableNextButton(stepNum) {
+    const btn = document.querySelector(`#step-${stepNum} .btn-next`);
+    if (btn) btn.disabled = false;
+  }
+</script>
+{% endblock %}

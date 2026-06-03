@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Laisser un avis : {{ product.title }} | Gagaro{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/reviews.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Accueil</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'catalogue:detail' slug=product.slug %}">{{ product.title }}</a></li>
+                    <li class="breadcrumb-item active">Laisser un avis</li>
+                </ol>
+            </nav>
+
+            <!-- Product Header -->
+            <div class="card border-0 shadow-sm p-4 mb-4">
+                <div class="d-flex align-items-center">
+                    <img src="{{ product.images.first.image.url }}" 
+                         alt="{{ product.title }}" 
+                         class="rounded me-4" 
+                         style="width: 80px; height: 80px; object-fit: cover;">
+                    <div>
+                        <h1 class="h4 mb-1">{{ product.title }}</h1>
+                        <p class="text-muted small mb-0">
+                            Commande {{ order.reference }} — livrée le {{ order.status_history.last.changed_at|date:"d/m/Y" }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Review Form -->
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-body p-4 p-md-5">
+                    <form method="post" enctype="multipart/form-data" id="review-form">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <!-- Section 1 : Note -->
+                        <div class="text-center mb-5">
+                            <h5 class="mb-3">Quelle note donneriez-vous à ce produit ?</h5>
+                            <div class="star-display d-flex justify-content-center gap-2 mb-2">
+                                {% for i in "12345" %}
+                                    <i class="bi bi-star text-muted" data-index="{{ forloop.counter }}"></i>
+                                {% endfor %}
+                            </div>
+                            <div id="rating-label" class="rating-label">Sélectionnez une note</div>
+                            
+                            <!-- Hidden inputs for Django Form -->
+                            <div class="d-none">
+                                {{ form.rating }}
+                            </div>
+                            {% if form.rating.errors %}
+                                <div class="text-danger small mt-1">{{ form.rating.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Section 2 : Titre -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Titre de votre avis</label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                                <div class="text-danger small">{{ form.title.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Section 3 : Corps -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Votre commentaire</label>
+                            {{ form.body }}
+                            <div class="d-flex justify-content-between mt-1">
+                                <div class="text-danger small">{% if form.body.errors %}{{ form.body.errors }}{% endif %}</div>
+                                <div class="text-muted small"><span id="char-count">0</span>/1000</div>
+                            </div>
+                        </div>
+
+                        <!-- Section 4 : Photos -->
+                        <div class="mb-5">
+                            <label class="form-label fw-bold mb-3">Ajouter des photos (optionnel)</label>
+                            <p class="text-muted small mb-3">Montrez aux autres clients à quoi ressemble le produit en vrai ! (Max 3 photos)</p>
+                            
+                            <div class="review-photo-slots">
+                                {% for i in "123" %}
+                                    <div class="review-photo-slot" data-slot="{{ forloop.counter }}">
+                                        <div class="photo-preview d-flex flex-column align-items-center">
+                                            <i class="bi bi-camera"></i>
+                                            <small>Photo {{ forloop.counter }}</small>
+                                        </div>
+                                        <button type="button" class="clear-photo d-none">&times;</button>
+                                        {% if forloop.counter == 1 %}{{ form.photo_1 }}{% endif %}
+                                        {% if forloop.counter == 2 %}{{ form.photo_2 }}{% endif %}
+                                        {% if forloop.counter == 3 %}{{ form.photo_3 }}{% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            {% if form.photo_1.errors or form.photo_2.errors or form.photo_3.errors %}
+                                <div class="text-danger small mt-2">Format non supporté ou image trop lourde.</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg py-3">
+                                Publier mon avis
+                            </button>
+                            <p class="text-center text-muted small mt-3">
+                                <i class="bi bi-shield-check me-1"></i>
+                                Votre avis sera visible après modération par notre équipe.
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/reviews.js' %}"></script>
+<script>
+    // Initialiser le compteur de caractères
+    const textarea = document.querySelector('textarea');
+    const counter  = document.getElementById('char-count');
+    if(textarea && counter) {
+        textarea.addEventListener('input', () => {
+            counter.textContent = textarea.value.length;
+        });
+        counter.textContent = textarea.value.length;
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,171 @@
+/* === LAYOUT ADMIN === */
+.admin-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  grid-template-rows: 56px 1fr;
+  min-height: 100vh;
+}
+
+.admin-topbar {
+  grid-column: 1 / -1;
+  background: #0d0d1a;
+  display: flex;
+  align-items: center;
+  padding: 0 1.5rem;
+  gap: 1rem;
+  position: sticky;
+  top: 0; z-index: 100;
+}
+
+.admin-sidebar {
+  background: #111128;
+  padding: 1rem 0;
+  overflow-y: auto;
+  height: calc(100vh - 56px);
+  position: sticky;
+  top: 56px;
+}
+
+.admin-main {
+  background: #f4f4f8;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+/* === SIDEBAR ADMIN === */
+.admin-nav-group {
+  padding: .25rem 0;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  margin-bottom: .5rem;
+}
+
+.admin-nav-link {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  padding: .6rem 1.25rem;
+  color: rgba(255,255,255,.6);
+  font-size: .85rem;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.admin-nav-link:hover,
+.admin-nav-link.active {
+  background: rgba(200,150,62,.12);
+  color: #c8963e; /* Kadoya Secondary */
+}
+
+/* === NOTIFICATION BELL === */
+.notif-bell {
+  position: relative;
+  cursor: pointer;
+  color: rgba(255,255,255,.8);
+  font-size: 1.3rem;
+}
+
+.notif-bell .badge {
+  position: absolute;
+  top: -6px; right: -6px;
+  background: #dc3545; /* Kadoya Danger */
+  border-radius: 50%;
+  min-width: 18px; height: 18px;
+  font-size: .65rem;
+  display: flex; align-items: center; justify-content: center;
+  animation: pulse-badge .8s infinite alternate;
+}
+
+@keyframes pulse-badge {
+  from { transform: scale(1); }
+  to   { transform: scale(1.2); }
+}
+
+/* === ALERT BANNERS === */
+.alert-banner {
+  border-radius: 12px;
+  padding: .75rem 1.25rem;
+  margin-bottom: .75rem;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  font-size: .9rem;
+}
+
+.alert-banner.urgent  { background: #fde8e8; border-left: 4px solid #dc3545; }
+.alert-banner.warning { background: #fff8e1; border-left: 4px solid #f39c12; }
+.alert-banner.info    { background: #e8f4fd; border-left: 4px solid #3498db; }
+
+/* === PROMO BANNER (site-wide) === */
+.promo-banner {
+  background: linear-gradient(
+    135deg, #1a1a2e, #2d2d5a
+  );
+  color: white;
+  text-align: center;
+  padding: .5rem 1rem;
+  font-size: .85rem;
+}
+
+.promo-code-chip {
+  background: #c8963e;
+  color: #1a1a2e;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-family: monospace;
+  margin-left: .5rem;
+}
+
+/* === STATUS TIMELINE === */
+.status-timeline {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.status-timeline::before {
+  content: '';
+  position: absolute;
+  left: .5rem; top: 0; bottom: 0;
+  width: 2px;
+  background: #e0e0e0;
+}
+
+.timeline-step {
+  position: relative;
+  padding: .75rem 0 .75rem 1.5rem;
+}
+
+.timeline-step::before {
+  content: '';
+  position: absolute;
+  left: -.4rem; top: 1rem;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: #c8963e;
+  border: 2px solid white;
+  box-shadow: 0 0 0 2px #c8963e;
+}
+
+.timeline-step.pending::before { background: #e0e0e0; }
+
+/* KPI Cards */
+.kpi-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease;
+}
+.kpi-card:hover {
+    transform: translateY(-5px);
+}
+.kpi-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}

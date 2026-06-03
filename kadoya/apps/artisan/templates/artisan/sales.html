@@ -1,0 +1,97 @@
+{% extends 'artisan_base.html' %}
+{% load humanize %}
+
+{% block artisan_content %}
+<div class="mb-4">
+    <h1 class="h3">Mes ventes</h1>
+    <p class="text-muted">Suivez vos commandes et gérez vos expéditions.</p>
+</div>
+
+<!-- Filtres -->
+<div class="card shadow-sm border-0 mb-4 p-3">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label small text-muted">Statut</label>
+            <select name="status" class="form-select">
+                <option value="">Tous les statuts</option>
+                {% for code, label in status_choices %}
+                <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small text-muted">Du</label>
+            <input type="date" name="date_from" value="{{ date_from }}" class="form-control">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small text-muted">Au</label>
+            <input type="date" name="date_to" value="{{ date_to }}" class="form-control">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-dark w-100">Filtrer</button>
+        </div>
+        <div class="col-md-1">
+            <a href="{% url 'artisan:sales' %}" class="btn btn-outline-secondary w-100"><i class="bi bi-x-lg"></i></a>
+        </div>
+    </form>
+</div>
+
+<!-- Table Ventes -->
+<div class="card shadow-sm border-0">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">Référence</th>
+                    <th>Produit</th>
+                    <th>Client</th>
+                    <th>Quantité</th>
+                    <th>Net Artisan</th>
+                    <th>Date</th>
+                    <th>Statut</th>
+                    <th class="text-end pe-4">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in sales %}
+                <tr>
+                    <td class="ps-4 fw-bold">#{{ item.order.reference }}</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            {% with item.product.images.all|first as img %}
+                            <img src="{{ img.image.url }}" class="product-row-img" style="width:30px; height:30px;" alt="">
+                            {% endwith %}
+                            <span>{{ item.product.title|truncatechars:25 }}</span>
+                        </div>
+                    </td>
+                    <td>{{ item.order.user.full_name }}</td>
+                    <td>x{{ item.quantity }}</td>
+                    <td class="fw-bold">{{ item.artisan_payout|floatformat:0|intcomma }} FCFA</td>
+                    <td>{{ item.order.created_at|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        <span class="badge bg-{{ item.order.status }}">{{ item.order.get_status_display }}</span>
+                    </td>
+                    <td class="text-end pe-4">
+                        <a href="{% url 'artisan:order_detail' item.order.reference %}" class="btn btn-sm btn-outline-dark">
+                            Détails
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-5 text-muted">
+                        <i class="bi bi-cart-x display-4 mb-3 d-block"></i>
+                        Aucune vente trouvée.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if is_paginated %}
+    <div class="card-footer bg-white py-3">
+        {% include 'partials/_pagination.html' %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

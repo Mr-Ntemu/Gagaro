@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mes commandes | Gagaro{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/reviews.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">Mes commandes</h1>
+    </div>
+
+    <!-- Filtres par statut -->
+    <div class="mb-4 overflow-auto">
+        <div class="d-flex gap-2 pb-2">
+            <a href="?" class="btn btn-sm {% if not status_filter %}btn-primary{% else %}btn-outline-secondary{% endif %} rounded-pill px-3">
+                Toutes
+            </a>
+            {% for code, label in status_choices %}
+                <a href="?status={{ code }}" 
+                   class="btn btn-sm {% if status_filter == code %}btn-primary{% else %}btn-outline-secondary{% endif %} rounded-pill px-3 text-nowrap">
+                    {{ label }}
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="order-list">
+        {% for order in orders %}
+            <div class="order-history-card">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <span class="text-muted small">Réf:</span>
+                        <span class="fw-bold">{{ order.reference }}</span>
+                        <span class="mx-2 text-muted">|</span>
+                        <span class="text-muted small">{{ order.created_at|date:"d M Y" }}</span>
+                    </div>
+                    <span class="badge bg-{% if order.status == 'delivered' %}success{% elif order.status == 'cancelled' %}danger{% elif order.status == 'shipped' %}info{% else %}secondary{% endif %} rounded-pill">
+                        {{ order.get_status_display }}
+                    </span>
+                </div>
+
+                <div class="row align-items-center">
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <div class="order-thumbnails">
+                            {% for item in order.items.all|slice:":4" %}
+                                <img src="{{ item.product.images.first.image.url }}" 
+                                     alt="{{ item.product.title }}" 
+                                     class="order-thumb"
+                                     title="{{ item.product.title }}">
+                            {% endfor %}
+                            {% if order.items.count > 4 %}
+                                <div class="order-thumb-more">+{{ order.items.count|add:"-4" }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <div class="mb-2">
+                            <span class="text-muted small">Total:</span>
+                            <span class="h5 mb-0 ms-1">{{ order.total_amount|floatformat:0 }} FCFA</span>
+                        </div>
+                        <div class="d-flex gap-2 justify-content-md-end">
+                            <a href="{% url 'reviews:order_tracking' reference=order.reference %}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-truck me-1"></i> Suivre
+                            </a>
+                            {% if order.status == 'delivered' %}
+                                <a href="{% url 'reviews:order_tracking' reference=order.reference %}#reviews" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-star me-1"></i> Avis
+                                </a>
+                            {% endif %}
+                            {% if order.status == 'pending' %}
+                                <a href="{% url 'payments:checkout' reference=order.reference %}" class="btn btn-sm btn-success">
+                                    Payer
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="bi bi-bag-x" style="font-size: 4rem; color: #ccc;"></i>
+                </div>
+                <h3>Aucune commande trouvée</h3>
+                <p class="text-muted">Vous n'avez pas encore passé de commande ou aucune ne correspond au filtre.</p>
+                <a href="{% url 'catalogue:listing' %}" class="btn btn-primary mt-3">
+                    Découvrir le catalogue
+                </a>
+            </div>
+        {% endfor %}
+
+        {% if is_paginated %}
+            <nav class="mt-5">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}">Précédent</a>
+                        </li>
+                    {% endif %}
+                    
+                    <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}">Suivant</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

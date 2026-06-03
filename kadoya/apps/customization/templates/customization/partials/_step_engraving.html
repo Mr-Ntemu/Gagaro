@@ -1,0 +1,110 @@
+<div class="step-content">
+  <h2 class="mb-4">3. Message gravé (Optionnel)</h2>
+  <p class="text-muted mb-4">Ajoutez un message personnel pour rendre ce cadeau unique.</p>
+
+  <form id="engraving-form">
+    <div class="mb-4">
+      <label class="form-label fw-bold">Votre message</label>
+      {{ engraving_form.engraving_text }}
+      <div class="text-end text-muted mt-1 small">
+        <span id="char-count">0</span> / 200 caractères
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-6">
+        <label class="form-label fw-bold">Style d'écriture</label>
+        <div class="font-selection">
+          {% for font in fonts %}
+            <div class="font-option {% if session.font == font %}selected{% endif %}" 
+                 onclick="selectFont('{{ font.id }}', '{{ font.css_family }}', this)">
+              <div class="font-preview" style="font-family: {{ font.css_family }};">
+                {{ font.name }}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-bold">Position</label>
+        <div class="position-selection">
+          <div class="btn-group w-100" role="group">
+            <input type="radio" class="btn-check" name="pos" id="pos-top" value="top" 
+                   {% if session.engraving_position == 'top' %}checked{% endif %} onchange="updatePos('top')">
+            <label class="btn btn-outline-secondary" for="pos-top">Haut</label>
+
+            <input type="radio" class="btn-check" name="pos" id="pos-bottom" value="bottom" 
+                   {% if session.engraving_position == 'bottom' or not session.engraving_position %}checked{% endif %} onchange="updatePos('bottom')">
+            <label class="btn btn-outline-secondary" for="pos-bottom">Bas</label>
+
+            <input type="radio" class="btn-check" name="pos" id="pos-left" value="left" 
+                   {% if session.engraving_position == 'left' %}checked{% endif %} onchange="updatePos('left')">
+            <label class="btn btn-outline-secondary" for="pos-left">Gauche</label>
+
+            <input type="radio" class="btn-check" name="pos" id="pos-right" value="right" 
+                   {% if session.engraving_position == 'right' %}checked{% endif %} onchange="updatePos('right')">
+            <label class="btn btn-outline-secondary" for="pos-right">Droite</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-5 d-flex justify-content-between">
+      <button type="button" class="btn btn-outline-secondary px-4" onclick="showStep(2)">
+        <i class="bi bi-arrow-left me-2"></i> Retour
+      </button>
+      <div>
+        <button type="button" class="btn btn-link text-muted me-3" onclick="saveEngraving(true)">
+          Passer cette étape
+        </button>
+        <button type="button" class="btn btn-primary btn-lg px-5" onclick="saveEngraving(false)">
+          Suivant <i class="bi bi-arrow-right ms-2"></i>
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+  const textInput = document.querySelector('input[name="engraving_text"]');
+  const previewText = document.getElementById('preview-engraving-text');
+  let currentFontId = "{{ session.font.id|default:'' }}";
+
+  textInput.addEventListener('input', () => {
+    previewText.textContent = textInput.value;
+    document.getElementById('char-count').textContent = textInput.value.length;
+  });
+
+  function selectFont(fontId, cssFamily, element) {
+    document.querySelectorAll('.font-option').forEach(o => o.classList.remove('selected'));
+    element.classList.add('selected');
+    currentFontId = fontId;
+    previewText.style.fontFamily = cssFamily;
+  }
+
+  function updatePos(pos) {
+    // Logic to update preview position (e.g., flex-direction or absolute pos)
+    // For now simple text align/order
+    // ...
+  }
+
+  async function saveEngraving(skip) {
+    const formData = new FormData();
+    if (!skip) {
+      formData.append('engraving_text', textInput.value);
+      formData.append('engraving_position', document.querySelector('input[name="pos"]:checked').value);
+      if (currentFontId) formData.append('font', currentFontId);
+    }
+    formData.append('csrfmiddlewaretoken', getCsrfToken());
+
+    const response = await fetch(engravingUrl, {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      showStep(4);
+    }
+  }
+</script>

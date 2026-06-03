@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Connexion — Gagaro{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center py-5">
+        <div class="col-md-5 col-lg-4">
+            <div class="card auth-card p-4">
+                <div class="text-center mb-4">
+                    <h2 class="h3">Bon retour !</h2>
+                    <p class="text-muted">Connectez-vous à votre compte Gagaro</p>
+                </div>
+                
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="username" class="form-control form-control-lg {% if form.errors %}is-invalid{% endif %}" required>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label d-flex justify-content-between">
+                            Mot de passe
+                            <a href="#" class="small text-muted text-decoration-none">Oublié ?</a>
+                        </label>
+                        <input type="password" name="password" class="form-control form-control-lg {% if form.errors %}is-invalid{% endif %}" required>
+                        {% if form.non_field_errors %}
+                            <div class="invalid-feedback d-block">Email ou mot de passe incorrect.</div>
+                        {% endif %}
+                    </div>
+                    
+                    <button type="submit" class="btn btn-kadoya btn-lg w-100 mb-3">Se connecter</button>
+                    
+                    <p class="text-center mb-0 text-muted">
+                        Pas de compte ? <a href="{% url 'accounts:register' %}" class="text-dark fw-bold text-decoration-none">Inscrivez-vous</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

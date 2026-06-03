@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Paiement non finalisé | Gagaro{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/payment.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+    <div class="max-w-lg mx-auto" style="max-width: 500px;">
+        <div class="mb-4 text-danger">
+            <i class="bi bi-x-circle" style="font-size: 5rem;"></i>
+        </div>
+
+        <h1 class="fw-bold mb-3">Paiement non finalisé</h1>
+        <p class="text-muted mb-4">
+            Nous n'avons pas pu confirmer votre paiement. Cela peut être dû à :
+        </p>
+        
+        <ul class="text-start mb-5 d-inline-block">
+            <li>Un solde insuffisant sur votre compte.</li>
+            <li>Un code PIN incorrect.</li>
+            <li>La notification a été ignorée ou le délai a expiré.</li>
+        </ul>
+
+        <div class="d-grid gap-3">
+            <a href="{% url 'payments:initiate' reference=order.reference %}" class="btn btn-primary btn-lg py-3 fw-bold">
+                RÉESSAYER LE PAIEMENT
+            </a>
+            <a href="#" class="btn btn-outline-secondary py-3">
+                Contacter le support
+            </a>
+        </div>
+        
+        <p class="mt-4 text-muted small">
+            Votre commande est conservée pendant 24h.
+        </p>
+    </div>
+</div>
+{% endblock %}

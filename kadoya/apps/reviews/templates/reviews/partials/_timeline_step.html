@@ -1,0 +1,16 @@
+<li class="timeline-item {% if step.completed %}completed{% endif %} {% if step.active %}active{% endif %}">
+    <div class="timeline-icon">
+        {% if step.completed %}
+            <i class="bi bi-check-lg"></i>
+        {% else %}
+            <i class="bi {{ step.icon }}"></i>
+        {% endif %}
+    </div>
+    <div class="timeline-content">
+        <div class="timeline-label">{{ step.label }}</div>
+        <div class="timeline-desc text-muted small">{{ step.description }}</div>
+        {% if step.date %}
+            <div class="timeline-date text-muted smaller mt-1">{{ step.date|date:"d M Y, H:i" }}</div>
+        {% endif %}
+    </div>
+</li>

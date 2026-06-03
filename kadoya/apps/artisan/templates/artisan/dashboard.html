@@ -1,0 +1,196 @@
+{% extends 'artisan_base.html' %}
+{% load humanize %}
+
+{% block artisan_content %}
+<div class="dashboard-header mb-4">
+    <h1>Bonjour, {{ request.user.first_name }} 👋</h1>
+    <p class="text-muted">Voici l'activité de votre atelier aujourd'hui.</p>
+</div>
+
+<!-- Grille KPI -->
+<div class="kpi-grid mb-4">
+    <div class="kpi-card" style="--kpi-color: #27ae60;">
+        <div class="kpi-icon"><i class="bi bi-graph-up-arrow"></i></div>
+        <div class="kpi-label">CA du mois</div>
+        <div class="kpi-value">{{ kpis.revenue_month|floatformat:0|intcomma }} FCFA</div>
+    </div>
+    
+    <div class="kpi-card" style="--kpi-color: #f39c12;">
+        <div class="kpi-icon"><i class="bi bi-bag-heart"></i></div>
+        <div class="kpi-label">Commandes en cours</div>
+        <div class="kpi-value">{{ kpis.orders_pending|add:kpis.orders_in_craft }}</div>
+        <small class="text-muted">{{ kpis.orders_pending }} à valider</small>
+    </div>
+
+    <div class="kpi-card" style="--kpi-color: #3498db;">
+        <div class="kpi-icon"><i class="bi bi-box-seam"></i></div>
+        <div class="kpi-label">Produits actifs</div>
+        <div class="kpi-value">{{ kpis.products_active }}</div>
+        <small class="text-muted">{{ kpis.products_draft }} brouillons</small>
+    </div>
+
+    <div class="kpi-card" style="--kpi-color: #d4af37;">
+        <div class="kpi-icon"><i class="bi bi-wallet2"></i></div>
+        <div class="kpi-label">Net à percevoir</div>
+        <div class="kpi-value">{{ kpis.payout_total|floatformat:0|intcomma }} FCFA</div>
+        <small class="text-muted">après commission 15%</small>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 p-4">
+            <h5 class="mb-4">Évolution du chiffre d'affaires</h5>
+            <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 p-4 h-100">
+            <h5 class="mb-4">Raccourcis</h5>
+            <div class="d-grid gap-3">
+                <a href="{% url 'artisan:product_create' %}" class="btn btn-primary py-3">
+                    <i class="bi bi-plus-circle me-2"></i> Déposer un produit
+                </a>
+                <a href="{% url 'artisan:sales' %}" class="btn btn-outline-dark py-3">
+                    <i class="bi bi-list-check me-2"></i> Voir mes ventes
+                </a>
+                <a href="{% url 'artisan:profile_edit' %}" class="btn btn-outline-dark py-3">
+                    <i class="bi bi-gear me-2"></i> Paramètres atelier
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="mb-0">Dernières ventes</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Produit</th>
+                                <th>Client</th>
+                                <th>Total</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sale in recent_sales %}
+                            <tr>
+                                <td>{{ sale.product.title|truncatechars:20 }}</td>
+                                <td>{{ sale.order.user.first_name }}</td>
+                                <td>{{ sale.line_total|floatformat:0|intcomma }}</td>
+                                <td>
+                                    <span class="badge bg-{{ sale.order.status }}">{{ sale.order.get_status_display }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-muted">Aucune vente récente.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Mes produits récents</h5>
+                <a href="{% url 'artisan:product_list' %}" class="btn btn-sm btn-link text-decoration-none">Voir tout</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Image</th>
+                                <th>Titre</th>
+                                <th>Prix</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in recent_products %}
+                            <tr>
+                                <td>
+                                    {% with product.images.all|first as img %}
+                                    <img src="{{ img.image.url }}" class="product-row-img" alt="">
+                                    {% endwith %}
+                                </td>
+                                <td>{{ product.title|truncatechars:20 }}</td>
+                                <td>{{ product.base_price|floatformat:0|intcomma }}</td>
+                                <td>
+                                    <span class="status-badge {{ product.status }}">{{ product.get_status_display }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-muted">Aucun produit déposé.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    const chartData = {{ chart_data|safe }};
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: chartData.map(d => d.month),
+            datasets: [
+                {
+                    label: 'CA Brut',
+                    data: chartData.map(d => d.revenue),
+                    backgroundColor: '#1a2a44',
+                    borderRadius: 5,
+                },
+                {
+                    label: 'Net Artisan',
+                    data: chartData.map(d => d.payout),
+                    backgroundColor: '#d4af37',
+                    borderRadius: 5,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString() + ' FCFA';
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

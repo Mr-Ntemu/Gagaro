@@ -1,0 +1,197 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Commande {{ order.reference }} — Gagaro Admin{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'dashboard:order_list' %}" class="text-decoration-none small text-muted">
+        <i class="bi bi-arrow-left me-1"></i> Retour à la liste
+    </a>
+    <div class="d-flex justify-content-between align-items-center mt-2">
+        <h2 class="h4 mb-0 fw-bold">Commande <span class="text-primary">#{{ order.reference }}</span></h2>
+        <span class="badge fs-6 rounded-pill 
+            {% if order.status == 'pending' %}bg-secondary
+            {% elif order.status == 'paid' %}bg-info
+            {% elif order.status == 'confirmed' %}bg-primary
+            {% elif order.status == 'in_craft' %}bg-warning text-dark
+            {% elif order.status == 'shipped' %}bg-info
+            {% elif order.status == 'delivered' %}bg-success
+            {% elif order.status == 'cancelled' %}bg-danger
+            {% endif %}">
+            {{ order.get_status_display }}
+        </span>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Colonne de gauche : Articles & Paiement -->
+    <div class="col-lg-8">
+        <!-- Articles -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-4">Articles commandés</h5>
+                {% for item in order.items.all %}
+                <div class="d-flex gap-4 mb-4 {% if not forloop.last %}border-bottom pb-4{% endif %}">
+                    {% with img=item.product.images.first %}
+                    <img src="{% if img %}{{ img.image.url }}{% else %}{% static 'img/placeholder.png' %}{% endif %}" 
+                         alt="" class="rounded-4" style="width: 100px; height: 100px; object-fit: cover;">
+                    {% endwith %}
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="fw-bold mb-1">{{ item.product.title }}</h6>
+                                <p class="extra-small text-muted mb-2">Artisan : {{ item.artisan.shop_name }}</p>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold">{{ item.price|floatformat:0 }} FCFA</div>
+                                <div class="extra-small text-muted">Qté: {{ item.quantity }}</div>
+                            </div>
+                        </div>
+
+                        {% if item.customization_session %}
+                        <div class="bg-light rounded-3 p-3 mt-2">
+                            <div class="row g-3">
+                                {% if item.customization_session.uploaded_image %}
+                                <div class="col-auto">
+                                    <img src="{{ item.customization_session.uploaded_image.url }}" 
+                                         class="rounded shadow-sm" style="width: 60px; height: 60px; object-fit: cover;" 
+                                         onclick="window.open(this.src)">
+                                </div>
+                                {% endif %}
+                                <div class="col">
+                                    <p class="extra-small fw-bold mb-1 text-uppercase text-primary">Personnalisation</p>
+                                    <div class="row g-2 extra-small">
+                                        <div class="col-6"><strong>Cadre :</strong> {{ item.customization_session.frame_option.name|default:"Standard" }}</div>
+                                        <div class="col-6"><strong>Texte :</strong> {{ item.customization_session.text_content|default:"Aucun" }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Historique -->
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-4">Historique de la commande</h5>
+                <div class="status-timeline">
+                    {% for history in order.status_history.all %}
+                    <div class="timeline-step">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="fw-bold small">{{ history.get_status_display }}</div>
+                                <div class="extra-small text-muted">{{ history.created_at|date:"d/m/Y H:i" }} par {{ history.changed_by.full_name|default:"Système" }}</div>
+                                {% if history.notes %}
+                                <div class="bg-light p-2 rounded small mt-1 border-start border-3 border-secondary">
+                                    {{ history.notes }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Colonne de droite : Info Client & Actions -->
+    <div class="col-lg-4">
+        <!-- Livraison -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-4">Informations Livraison</h5>
+                <p class="mb-1 fw-bold">{{ order.delivery_name }}</p>
+                <p class="mb-3 text-primary"><i class="bi bi-telephone me-2"></i>{{ order.delivery_phone }}</p>
+                
+                <div class="small text-muted">
+                    <i class="bi bi-geo-alt me-2"></i>{{ order.delivery_address }}<br>
+                    {{ order.delivery_city }}
+                </div>
+                {% if order.delivery_notes %}
+                <div class="mt-3 p-2 bg-light rounded extra-small">
+                    <strong>Note client :</strong> {{ order.delivery_notes }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Résumé Financier -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-4">Résumé financier</h5>
+                <div class="d-flex justify-content-between mb-2 small">
+                    <span>Sous-total</span>
+                    <span>{{ order.total_amount|floatformat:0 }} FCFA</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2 small text-success">
+                    <span>Remise promo</span>
+                    <span>- 0 FCFA</span>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between mb-0 h5 fw-bold">
+                    <span>Total</span>
+                    <span class="text-primary">{{ order.total_amount|floatformat:0 }} FCFA</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Validation Form (si PAID) -->
+        {% if form %}
+        <div class="card border-0 shadow-sm rounded-4 border-start border-4 border-warning mb-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-3 text-warning"><i class="bi bi-shield-check me-2"></i>Validation Admin</h5>
+                <p class="small text-muted mb-4">Cette commande contient des articles personnalisés. Veuillez valider les choix du client.</p>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        {% for radio in form.approved %}
+                        <div class="form-check mb-2">
+                            {{ radio.tag }}
+                            <label class="form-check-label small fw-bold" for="{{ radio.id_for_label }}">
+                                {{ radio.label }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">Note d'administration</label>
+                        {{ form.admin_note }}
+                        {% if form.admin_note.errors %}
+                        <div class="text-danger extra-small mt-1">{{ form.admin_note.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" class="btn btn-warning w-100 fw-bold">Confirmer la décision</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Transitions simples (pour les autres statuts) -->
+        {% if order.status == 'in_craft' or order.status == 'shipped' %}
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-3">Mise à jour du statut</h5>
+                {% if order.status == 'in_craft' %}
+                <form action="" method="post">{% csrf_token %}<input type="hidden" name="action" value="ship">
+                    <button class="btn btn-outline-primary w-100" disabled>Marquer comme expédiée (TODO Sprint 8)</button>
+                </form>
+                {% elif order.status == 'shipped' %}
+                <form action="" method="post">{% csrf_token %}<input type="hidden" name="action" value="deliver">
+                    <button class="btn btn-outline-success w-100" disabled>Marquer comme livrée (TODO Sprint 8)</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,8 @@
+<div class="rating-stars">
+  {% for i in "12345" %}
+    <i class="bi bi-star{% if forloop.counter <= rating|floatformat:0|add:0 %}-fill text-warning{% endif %}"></i>
+  {% endfor %}
+  {% if show_count %}
+    <span class="ms-2 text-muted small">({{ count }} avis)</span>
+  {% endif %}
+</div>

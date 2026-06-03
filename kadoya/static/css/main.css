@@ -1,0 +1,89 @@
+:root {
+  --kadoya-primary:    #1A1A2E;   /* Bleu nuit profond */
+  --kadoya-secondary:  #C8963E;   /* Or artisanal */
+  --kadoya-accent:     #E8D5B0;   /* Crème ivoire */
+  --kadoya-surface:    #F7F3EE;   /* Fond chaud */
+  --kadoya-danger:     #C0392B;
+  --kadoya-success:    #27AE60;
+  
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body:    'DM Sans', 'Helvetica Neue', sans-serif;
+  
+  --radius-card:  16px;
+  --shadow-card:  0 4px 20px rgba(26,26,46,0.08);
+  --transition:   all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--kadoya-surface);
+  color: var(--kadoya-primary);
+}
+
+h1, h2, h3, h4, h5, .display-font {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.navbar {
+  background-color: white;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.navbar-brand {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--kadoya-primary) !important;
+}
+
+.btn-kadoya {
+  background-color: var(--kadoya-primary);
+  color: white;
+  border-radius: 8px;
+  padding: 0.6rem 1.5rem;
+  transition: var(--transition);
+}
+
+.btn-kadoya:hover {
+  background-color: #2a2a4a;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.btn-outline-kadoya {
+  border: 2px solid var(--kadoya-primary);
+  color: var(--kadoya-primary);
+  border-radius: 8px;
+  padding: 0.6rem 1.5rem;
+  transition: var(--transition);
+}
+
+.btn-outline-kadoya:hover {
+  background-color: var(--kadoya-primary);
+  color: white;
+}
+
+/* Auth Cards */
+.auth-card {
+  border-radius: var(--radius-card);
+  border: none;
+  box-shadow: var(--shadow-card);
+  background: white;
+}
+
+.role-card {
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: var(--transition);
+  border-radius: var(--radius-card);
+}
+
+.role-card.active {
+  border-color: var(--kadoya-secondary);
+  background-color: rgba(200, 150, 62, 0.05);
+}
+
+.role-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-card);
+}

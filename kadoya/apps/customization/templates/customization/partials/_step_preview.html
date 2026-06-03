@@ -1,0 +1,58 @@
+<div class="step-content text-center">
+  <i class="bi bi-check-circle-fill display-3 text-success mb-4"></i>
+  <h2 class="mb-4">Votre création est prête !</h2>
+  <p class="text-muted mb-5">Vérifiez les détails de votre personnalisation avant de l'ajouter au panier.</p>
+
+  <div class="card bg-light border-0 mb-5 text-start">
+    <div class="card-body p-4">
+      <div class="row align-items-center">
+        <div class="col-sm-4 text-center">
+          {% if session.uploaded_photo_thumb %}
+            <img src="{{ session.uploaded_photo_thumb.url }}" class="img-thumbnail" style="max-height: 120px;">
+          {% endif %}
+        </div>
+        <div class="col-sm-8">
+          <ul class="list-unstyled mb-0 mt-3 mt-sm-0">
+            <li class="mb-2"><i class="bi bi-aspect-ratio me-2"></i> <strong>Cadre :</strong> {{ session.frame_option.label }}</li>
+            {% if session.engraving_text %}
+              <li class="mb-2"><i class="bi bi-chat-left-quote me-2"></i> <strong>Message :</strong> "{{ session.engraving_text }}"</li>
+            {% endif %}
+            <li><i class="bi bi-tag me-2"></i> <strong>Prix final :</strong> {{ session.computed_price|floatformat:0 }} FCFA</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex flex-column gap-3 align-items-center">
+    <button type="button" class="btn btn-success btn-lg px-5 py-3 fw-bold shadow" onclick="completeCustomization()">
+      AJOUTER AU PANIER <i class="bi bi-cart-plus ms-2"></i>
+    </button>
+    <button type="button" class="btn btn-link text-muted" onclick="showStep(1)">
+      Modifier la personnalisation
+    </button>
+  </div>
+  
+  <p class="mt-4 text-xs text-muted">
+    Votre personnalisation est sauvegardée. Vous pouvez revenir la modifier à tout moment.
+  </p>
+</div>
+
+<script>
+  async function completeCustomization() {
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', getCsrfToken());
+
+    const response = await fetch(completeUrl, {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      window.location.href = data.redirect_url;
+    } else {
+      alert(data.error);
+    }
+  }
+</script>

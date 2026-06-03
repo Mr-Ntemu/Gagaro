@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Validation en cours... | Gagaro{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/payment.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+    <div class="max-w-lg mx-auto" style="max-width: 500px;">
+        <div class="pulse-icon">
+            <i class="bi bi-phone"></i>
+        </div>
+
+        <h2 class="fw-bold mb-3">Validation en cours...</h2>
+        <p class="mb-4">
+            Vérifiez votre téléphone et confirmez le paiement de
+            <strong class="text-secondary">{{ order.total_amount|floatformat:0 }} FCFA</strong>
+            via votre application Mobile Money.
+        </p>
+
+        <div class="timer-bar">
+            <div class="timer-fill" id="timer-fill"></div>
+        </div>
+        <p class="timer-text mb-5" id="timer-text">Expire dans 5:00</p>
+
+        <div class="status-indicator d-flex align-items-center justify-content-center gap-3" id="status-indicator">
+            <div class="spinner-border text-secondary" role="status" style="width: 1.5rem; height: 1.5rem;"></div>
+            <span class="fw-bold">En attente de confirmation...</span>
+        </div>
+
+        <div class="mt-5 text-muted small">
+            <p>Ne fermez pas cette page. Vous serez redirigé automatiquement après confirmation.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const pollUrl = "{{ poll_url }}";
+    const successUrl = "{{ success_url }}";
+    const failedUrl = "{{ failed_url }}";
+</script>
+<script src="{% static 'js/payment-polling.js' %}"></script>
+{% endblock %}

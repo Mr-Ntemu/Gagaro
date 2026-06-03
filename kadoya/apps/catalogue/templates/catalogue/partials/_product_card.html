@@ -1,0 +1,58 @@
+<article class="masonry-item product-card">
+    <a href="{{ product.get_absolute_url }}" class="text-decoration-none h-100 d-block">
+        <div class="card-image-wrapper">
+            {% if product.cover_image %}
+                <img src="{{ product.cover_image.image.url }}" 
+                     alt="{{ product.cover_image.alt_text|default:product.title }}" 
+                     loading="lazy" class="card-img">
+            {% else %}
+                <div class="card-img-placeholder">
+                    <i class="bi bi-image"></i>
+                </div>
+            {% endif %}
+            
+            <div class="card-overlay">
+                <span class="btn-premium-hover">
+                    Voir le détail <i class="bi bi-arrow-right ms-2"></i>
+                </span>
+            </div>
+
+            <div class="badges-container top-left">
+                {% if product.discount_percentage %}
+                    <span class="badge-glass badge-promo">-{{ product.discount_percentage }}%</span>
+                {% endif %}
+            </div>
+            
+            <div class="badges-container top-right">
+                {% if product.is_customizable %}
+                    <span class="badge-glass badge-icon" title="Personnalisable">
+                        <i class="bi bi-magic"></i>
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div class="card-meta mb-2">
+                <span class="text-uppercase tracking-wider small-category">{{ product.category.name }}</span>
+            </div>
+            
+            <h3 class="card-title">{{ product.title }}</h3>
+            
+            <p class="card-artisan">
+                <i class="bi bi-palette text-muted me-1"></i> {{ product.artisan.full_name }}
+            </p>
+
+            <div class="card-price-row mt-3">
+                {% if product.discounted_price %}
+                    <div class="d-flex flex-column">
+                        <span class="price-original">{{ product.base_price|floatformat:0 }} FCFA</span>
+                        <span class="price-current text-gradient">{{ product.discounted_price|floatformat:0 }} FCFA</span>
+                    </div>
+                {% else %}
+                    <span class="price-current">{{ product.base_price|floatformat:0 }} FCFA</span>
+                {% endif %}
+            </div>
+        </div>
+    </a>
+</article>

@@ -1,0 +1,41 @@
+<div class="order-summary-card shadow-sm">
+  <h4 class="mb-4">Résumé de la commande</h4>
+  
+  <div class="summary-items mb-4">
+    {% for item in items %}
+      <div class="d-flex justify-content-between mb-2 small">
+        <span>{{ item.product.title }} (x{{ item.quantity }})</span>
+        <span>{{ item.line_total|floatformat:0 }} FCFA</span>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="summary-details">
+    <div class="summary-row">
+      <span>Sous-total</span>
+      <span id="cart-subtotal">{{ cart.subtotal|floatformat:0 }} FCFA</span>
+    </div>
+    <div class="summary-row">
+      <span>Livraison</span>
+      <span class="text-muted">Calculée au checkout</span>
+    </div>
+    <div class="summary-row opacity-50">
+      <span>Code promo</span>
+      <span class="badge bg-light text-muted">Sprint 7</span>
+    </div>
+    
+    <div class="summary-total">
+      <span>Total</span>
+      <span id="cart-total">{{ cart.subtotal|floatformat:0 }} FCFA</span>
+    </div>
+  </div>
+
+  {% if request.resolver_match.url_name == 'cart' %}
+    <a href="{% url 'orders:checkout' %}" class="btn btn-primary btn-lg w-100 mt-4 py-3 fw-bold">
+      PASSER LA COMMANDE <i class="bi bi-arrow-right ms-2"></i>
+    </a>
+    <a href="{% url 'catalogue:listing' %}" class="btn btn-link btn-sm w-100 mt-2 text-muted">
+      Continuer mes achats
+    </a>
+  {% endif %}
+</div>

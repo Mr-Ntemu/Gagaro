@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mon Panier | Gagaro{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/cart.css' %}">
+<link rel="stylesheet" href="{% static 'css/recommendations.css' %}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+{% endblock %}
+
+
+{% block content %}
+<div class="container py-5">
+  <h1 class="mb-5 h2 fw-bold">Mon Panier <span class="text-muted fw-normal">({{ cart.total_items }} articles)</span></h1>
+
+  {% if cart.is_empty %}
+    {% include 'orders/partials/_empty_cart.html' %}
+  {% else %}
+    <div class="row g-5" id="cart-content">
+      <div class="col-lg-8">
+        <div class="cart-items-list">
+          {% for item in items %}
+            {% include 'orders/partials/_cart_item.html' %}
+          {% endfor %}
+        </div>
+      </div>
+      
+      <div class="col-lg-4">
+        {% include 'orders/partials/_order_summary.html' %}
+      </div>
+    </div>
+
+    <div id="empty-state-container" class="d-none">
+        {% include 'orders/partials/_empty_cart.html' %}
+    </div>
+  {% endif %}
+
+  <!-- Recommandations Panier -->
+  <section class="reco-section mt-5 pt-5 border-top">
+    <div class="section-header">
+      <h2 class="section-title">Complétez votre commande</h2>
+    </div>
+    {% include 'recommendations/partials/_recommendation_strip.html' with container_id="reco-cart-strip" reco_context="cart" limit=4 %}
+  </section>
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+  function getCsrfToken() {
+    return "{{ csrf_token }}";
+  }
+
+  function formatPrice(price) {
+    return Math.round(price) + " FCFA";
+  }
+
+  function updateCartBadge(count) {
+    const badge = document.querySelector('.cart-badge');
+    if (badge) badge.textContent = count;
+  }
+
+  async function updateQuantity(itemId, newQty) {
+    const res = await fetch(`/panier/modifier/${itemId}/`, {
+      method:  'POST',
+      headers: {
+        'Content-Type':     'application/json',
+        'X-CSRFToken':      getCsrfToken(),
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: JSON.stringify({ quantity: newQty }),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      document.querySelector(`#line-total-${itemId}`).textContent = formatPrice(data.line_total);
+      document.querySelector('#cart-subtotal').textContent = formatPrice(data.cart_subtotal);
+      document.querySelector('#cart-total').textContent = formatPrice(data.cart_subtotal);
+      updateCartBadge(data.cart_total_items);
+    } else {
+      alert(data.error);
+    }
+  }
+
+  async function removeItem(itemId) {
+    if (!confirm('Supprimer cet article ?')) return;
+
+    const res = await fetch(`/panier/supprimer/${itemId}/`, {
+      method:  'DELETE',
+      headers: { 'X-CSRFToken': getCsrfToken() },
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      document.querySelector(`#cart-item-${itemId}`).remove();
+      updateCartBadge(data.cart_total_items);
+      document.querySelector('#cart-subtotal').textContent = formatPrice(data.cart_subtotal);
+      document.querySelector('#cart-total').textContent = formatPrice(data.cart_subtotal);
+
+      if (data.is_empty) {
+        document.getElementById('cart-content').classList.add('d-none');
+        document.getElementById('empty-state-container').classList.remove('d-none');
+      }
+    }
+  }
+
+  document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('qty-btn')) {
+      const btn = e.target;
+      const input = btn.closest('.qty-wrapper').querySelector('.qty-input');
+      const current = parseInt(input.value);
+      const delta = btn.dataset.action === 'inc' ? 1 : -1;
+      const newQty = Math.max(1, current + delta);
+      input.value = newQty;
+      updateQuantity(btn.dataset.itemId, newQty);
+    }
+  });
+</script>
+<script src="{% static 'js/recommendations.js' %}"></script>
+{% endblock %}

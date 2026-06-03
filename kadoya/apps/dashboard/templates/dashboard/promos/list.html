@@ -1,0 +1,109 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Codes Promo — Gagaro Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="h4 mb-0 fw-bold">Codes Promotionnels</h2>
+    <a href="{% url 'dashboard:promo_create' %}" class="btn btn-primary rounded-pill px-4 fw-bold">
+        <i class="bi bi-plus-lg me-2"></i> Nouveau code
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">Code</th>
+                    <th>Occasion</th>
+                    <th>Réduction</th>
+                    <th>Validité</th>
+                    <th>Usages</th>
+                    <th>Statut</th>
+                    <th class="text-end pe-4">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for promo in promos %}
+                <tr>
+                    <td class="ps-4"><code class="fw-bold text-primary fs-6">{{ promo.code }}</code></td>
+                    <td>
+                        {% if promo.occasion %}
+                        <span class="badge bg-light text-dark border">{{ promo.get_occasion_display }}</span>
+                        {% else %}
+                        <span class="text-muted small">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="fw-bold">
+                            {% if promo.discount_type == 'percentage' %}{{ promo.discount_value|floatformat:0 }}%
+                            {% elif promo.discount_type == 'fixed' %}{{ promo.discount_value|floatformat:0 }} FCFA
+                            {% else %}Gratuite{% endif %}
+                        </div>
+                        <div class="extra-small text-muted">{{ promo.get_discount_type_display }}</div>
+                    </td>
+                    <td class="small">
+                        <div>Du {{ promo.valid_from|date:"d/m/y" }}</div>
+                        <div class="text-muted">Au {{ promo.valid_until|date:"d/m/y" }}</div>
+                    </td>
+                    <td>
+                        <div class="small fw-bold">{{ promo.current_uses }} / {{ promo.max_uses|default:"∞" }}</div>
+                        {% if promo.max_uses %}
+                        <div class="progress mt-1" style="height: 4px;">
+                            <div class="progress-bar {% if promo.usage_percentage > 90 %}bg-danger{% else %}bg-primary{% endif %}" 
+                                 role="progressbar" style="width: {{ promo.usage_percentage }}%"></div>
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input promo-toggle" type="checkbox" data-id="{{ promo.id }}" 
+                                   {% if promo.is_active %}checked{% endif %}>
+                            <label class="small text-muted ms-1 toggle-label">{% if promo.is_active %}Actif{% else %}Inactif{% endif %}</label>
+                        </div>
+                    </td>
+                    <td class="text-end pe-4">
+                        <div class="dropdown">
+                            <button class="btn btn-light btn-sm rounded-circle" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                <li><a class="dropdown-item small" href="{% url 'dashboard:promo_edit' promo.id %}"><i class="bi bi-pencil me-2"></i>Modifier</a></li>
+                                <li><a class="dropdown-item small text-danger" href="#"><i class="bi bi-trash me-2"></i>Supprimer</a></li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-5 text-muted">Aucun code promo créé</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.querySelectorAll('.promo-toggle').forEach(toggle => {
+        toggle.addEventListener('change', function() {
+            const id = this.dataset.id;
+            const label = this.parentElement.querySelector('.toggle-label');
+            
+            fetch(`/kadmin/promos/${id}/toggle/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if(data.success) {
+                    label.innerText = data.label;
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

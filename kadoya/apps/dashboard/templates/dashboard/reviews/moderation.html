@@ -1,0 +1,156 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Modération des avis | Gagaro Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h4 mb-0 fw-bold">Modération des avis</h2>
+        <p class="text-muted small mb-0">{{ reviews.count }} avis en attente de validation</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Client</th>
+                            <th>Produit</th>
+                            <th>Note</th>
+                            <th>Avis</th>
+                            <th>Photos</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for review in reviews %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-bold">{{ review.user.full_name }}</div>
+                                    <div class="small text-muted">{{ review.created_at|date:"d/m/Y H:i" }}</div>
+                                </td>
+                                <td>
+                                    <div class="small fw-bold">{{ review.product.title }}</div>
+                                    <div class="smaller text-muted">Réf Commande: {{ review.order.reference }}</div>
+                                </td>
+                                <td>
+                                    <div class="text-warning">
+                                        {% for i in "12345" %}
+                                            <i class="bi bi-star{% if forloop.counter <= review.rating %}-fill{% endif %}"></i>
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                                <td style="max-width: 300px;">
+                                    {% if review.title %}
+                                        <div class="fw-bold small">{{ review.title }}</div>
+                                    {% endif %}
+                                    <div class="small text-truncate" title="{{ review.body }}">{{ review.body }}</div>
+                                </td>
+                                <td>
+                                    {% if review.photos.exists %}
+                                        <div class="d-flex gap-1">
+                                            {% for photo in review.photos.all %}
+                                                <a href="{{ photo.image.url }}" target="_blank">
+                                                    <img src="{{ photo.thumbnail.url|default:photo.image.url }}" 
+                                                         alt="Photo avis" class="rounded" 
+                                                         style="width: 32px; height: 32px; object-fit: cover;">
+                                                </a>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted smaller">Aucune</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button type="button" class="btn btn-sm btn-outline-success" 
+                                                onclick="confirmAction('approve-{{ review.pk }}')">
+                                            Approuver
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                onclick="showRejectModal('{{ review.pk }}', '{{ review.user.full_name }}')">
+                                            Rejeter
+                                        </button>
+                                    </div>
+
+                                    <!-- Hidden forms -->
+                                    <form id="approve-{{ review.pk }}" action="{% url 'dashboard:review_approve' pk=review.pk %}" method="post" class="d-none">
+                                        {% csrf_token %}
+                                    </form>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-5">
+                                    <i class="bi bi-check2-circle display-4 text-success mb-3 d-block"></i>
+                                    <p class="text-muted mb-0">Tous les avis ont été modérés. Bon travail !</p>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        {% if is_paginated %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Précédent</a></li>
+                    {% endif %}
+                    <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
+                    {% if page_obj.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Suivant</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal Rejet -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <form id="rejectForm" method="post" class="modal-content">
+            {% csrf_token %}
+            <div class="modal-header">
+                <h5 class="modal-title">Rejeter l'avis de <span id="clientName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Motif du rejet (visible par le client)</label>
+                    <textarea name="rejection_note" class="form-control" rows="4" required 
+                              placeholder="Ex: Contenu inapproprié, langage impoli..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+                <button type="submit" class="btn btn-danger">Confirmer le rejet</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function confirmAction(formId) {
+        if (confirm('Voulez-vous vraiment approuver cet avis ?')) {
+            document.getElementById(formId).submit();
+        }
+    }
+
+    function showRejectModal(pk, name) {
+        const modal = new bootstrap.Modal(document.getElementById('rejectModal'));
+        const form = document.getElementById('rejectForm');
+        document.getElementById('clientName').textContent = name;
+        form.action = `/kadmin/avis/${pk}/rejeter/`;
+        modal.show();
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,63 @@
+<div class="step-content">
+  <h2 class="mb-4">2. Choisissez votre cadre</h2>
+  <p class="text-muted mb-4">Sélectionnez la taille et le style qui mettront le mieux en valeur votre photo.</p>
+
+  <form id="frame-form">
+    <div class="frame-cards">
+      {% for option in frame_options %}
+        <div class="frame-card {% if session.frame_option == option %}selected{% endif %}" 
+             onclick="selectFrame('{{ option.id }}', this)">
+          <i class="bi bi-check-circle-fill check-icon"></i>
+          <div class="frame-card-body">
+            <h5 class="mb-1">{{ option.label }}</h5>
+            <p class="text-muted mb-2">{{ option.dimensions_display }}</p>
+            <span class="badge bg-light text-dark mb-2">{{ option.get_material_display }}</span>
+            <div class="price-extra">
+              {% if option.extra_price > 0 %}
+                +{{ option.extra_price|floatformat:0 }} FCFA
+              {% else %}
+                Inclus
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="mt-5 d-flex justify-content-between">
+      <button type="button" class="btn btn-outline-secondary px-4" onclick="showStep(1)">
+        <i class="bi bi-arrow-left me-2"></i> Retour
+      </button>
+      <button type="button" class="btn btn-primary btn-lg px-5 btn-next" 
+              onclick="showStep(3)" {% if not session.is_frame_selected %}disabled{% endif %}>
+        Continuer <i class="bi bi-arrow-right ms-2"></i>
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  async function selectFrame(optionId, element) {
+    document.querySelectorAll('.frame-card').forEach(c => c.classList.remove('selected'));
+    element.classList.add('selected');
+
+    const formData = new FormData();
+    formData.append('frame_option', optionId);
+    formData.append('csrfmiddlewaretoken', getCsrfToken());
+
+    const response = await fetch(frameUrl, {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      document.getElementById('price-value').textContent = Math.round(data.computed_price);
+      enableNextButton(2);
+      
+      // Update preview aspect ratio if needed (bonus)
+      // const ratio = ...;
+      // document.getElementById('preview-frame').style.aspectRatio = ratio;
+    }
+  }
+</script>

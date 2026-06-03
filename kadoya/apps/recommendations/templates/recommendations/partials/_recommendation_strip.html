@@ -1,0 +1,26 @@
+{% comment %}
+  Usage :
+  {% include 'recommendations/partials/_recommendation_strip.html'
+     with container_id="reco-home-strip" context="home" limit=8 %}
+{% endcomment %}
+
+<div class="reco-strip loading"
+     id="{{ container_id }}"
+     data-context="{{ reco_context }}"
+     data-limit="{{ limit|default:8 }}"
+     {% if current_product %}data-current-product="{{ current_product.pk }}"{% endif %}
+     {% if current_product %}data-current-category="{{ current_product.category_id }}"{% endif %}>
+
+  <!-- Skeleton affiché pendant le chargement AJAX -->
+  {% for i in "12345678" %}
+    <div class="reco-skeleton">
+      <div class="skeleton skeleton-img" style="height: 200px;"></div>
+      <div style="padding: .75rem;">
+        <div class="skeleton skeleton-line" style="height:10px;width:60%;margin-bottom:6px;"></div>
+        <div class="skeleton skeleton-line" style="height:14px;margin-bottom:6px;"></div>
+        <div class="skeleton skeleton-line short" style="height:12px;width:40%;"></div>
+      </div>
+    </div>
+  {% endfor %}
+
+</div>

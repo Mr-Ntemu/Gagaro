@@ -1,0 +1,122 @@
+{% extends 'artisan_base.html' %}
+{% load humanize %}
+
+{% block artisan_content %}
+<div class="d-flex align-items-center gap-3 mb-4">
+    <a href="{% url 'artisan:sales' %}" class="btn btn-outline-dark btn-sm"><i class="bi bi-arrow-left"></i></a>
+    <h1 class="h3 mb-0">Commande #{{ order.reference }}</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">Articles de mon atelier</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Produit</th>
+                                <th>Options</th>
+                                <th>Quantité</th>
+                                <th class="pe-4 text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in my_items %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center gap-3">
+                                        {% with item.product.images.all|first as img %}
+                                        <img src="{{ img.image.url }}" class="product-row-img" style="width:50px; height:50px;" alt="">
+                                        {% endwith %}
+                                        <span>{{ item.product.title }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if item.frame_option %}
+                                    <span class="small text-muted">Cadre: {{ item.frame_option.label }} (+{{ item.frame_option.extra_price|floatformat:0 }} FCFA)</span>
+                                    {% else %}
+                                    <span class="small text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>x{{ item.quantity }}</td>
+                                <td class="pe-4 text-end fw-bold">{{ item.line_total|floatformat:0|intcomma }} FCFA</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td colspan="3" class="ps-4 fw-bold">Sous-total atelier</td>
+                                <td class="pe-4 text-end fw-bold h5 mb-0">
+                                    {% load mathfilters %}
+                                    {{ order.total_amount|floatformat:0|intcomma }} FCFA
+                                    {# TODO: Calculate real subtotal for this artisan if multiple artisans in one order #}
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {% if order.shipping_address %}
+        <div class="card shadow-sm border-0 p-4">
+            <h5 class="mb-3">Informations de livraison</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-1 fw-bold">{{ order.full_name }}</p>
+                    <p class="mb-1">{{ order.shipping_address }}</p>
+                    <p class="mb-1">{{ order.city }}, {{ order.quarter }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p class="mb-1"><i class="bi bi-telephone me-2"></i> {{ order.phone }}</p>
+                    <p class="mb-1"><i class="bi bi-envelope me-2"></i> {{ order.email }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 p-4 mb-4">
+            <h5 class="mb-4">Statut de la commande</h5>
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <div class="h1 mb-0"><i class="bi bi-info-circle text-{{ order.status }}"></i></div>
+                <div>
+                    <div class="fw-bold">{{ order.get_status_display }}</div>
+                    <div class="small text-muted">Mise à jour le {{ order.updated_at|date:"d/m/Y à H:i" }}</div>
+                </div>
+            </div>
+
+            {% if order.status == 'paid' %}
+            <div class="alert alert-info small">
+                <i class="bi bi-info-circle me-2"></i>
+                Le paiement a été confirmé. Vous pouvez commencer la préparation.
+            </div>
+            {% endif %}
+
+            <div class="d-grid gap-2">
+                <button class="btn btn-dark py-3" disabled>Mettre à jour le statut (Sprint 7)</button>
+                <button class="btn btn-outline-secondary">Imprimer le bon de livraison</button>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 p-4">
+            <h5 class="mb-3">Résumé du paiement</h5>
+            <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">Total Commande</span>
+                <span>{{ order.total_amount|floatformat:0|intcomma }} FCFA</span>
+            </div>
+            <hr>
+            <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">Net pour l'atelier</span>
+                <span class="fw-bold text-success">{{ order.total_amount|floatformat:0|intcomma }} FCFA</span>
+                {# TODO: Calculate real payout for this artisan items #}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

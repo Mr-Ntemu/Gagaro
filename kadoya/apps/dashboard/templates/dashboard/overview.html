@@ -1,0 +1,220 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Vue d'ensemble — Gagaro Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="h4 mb-0 fw-bold">Vue d'ensemble</h2>
+    <div class="text-muted small">
+        <i class="bi bi-calendar3 me-2"></i> {{ today|date:"d F Y" }}
+    </div>
+</div>
+
+<!-- Alertes Urgentes -->
+{% if kpis.orders_to_validate > 0 %}
+<div class="alert-banner urgent">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span>Il y a <strong>{{ kpis.orders_to_validate }}</strong> commande(s) personnalisée(s) en attente de validation.</span>
+    <a href="{% url 'dashboard:custom_orders' %}" class="ms-auto btn btn-danger btn-sm py-0">Traiter</a>
+</div>
+{% endif %}
+
+{% if kpis.products_pending > 0 %}
+<div class="alert-banner warning">
+    <i class="bi bi-clock-fill"></i>
+    <span><strong>{{ kpis.products_pending }}</strong> produit(s) artisan(s) en attente de publication.</span>
+    <a href="{% url 'dashboard:products_pending' %}" class="ms-auto btn btn-warning btn-sm py-0">Vérifier</a>
+</div>
+{% endif %}
+
+{% if kpis.stock_alerts > 0 %}
+<div class="alert-banner info">
+    <i class="bi bi-box-seam-fill"></i>
+    <span><strong>{{ kpis.stock_alerts }}</strong> produit(s) ont un stock critique (<= 3).</span>
+    <a href="{% url 'dashboard:product_list' %}?status=active" class="ms-auto btn btn-info btn-sm py-0 text-white">Gérer</a>
+</div>
+{% endif %}
+
+<!-- KPIs Grid -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="kpi-card h-100">
+            <div class="kpi-icon bg-primary bg-opacity-10 text-primary">
+                <i class="bi bi-cart-check"></i>
+            </div>
+            <h6 class="text-muted small text-uppercase">Commandes Aujourd'hui</h6>
+            <h3 class="fw-bold mb-1">{{ kpis.orders_today }}</h3>
+            <p class="mb-0 extra-small text-success">
+                <i class="bi bi-cash me-1"></i> {{ kpis.revenue_today|floatformat:0 }} FCFA
+            </p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card h-100">
+            <div class="kpi-icon bg-success bg-opacity-10 text-success">
+                <i class="bi bi-wallet2"></i>
+            </div>
+            <h6 class="text-muted small text-uppercase">Chiffre d'Affaires (Mois)</h6>
+            <h3 class="fw-bold mb-1">{{ kpis.revenue_month|floatformat:0 }}</h3>
+            <p class="mb-0 extra-small text-muted">FCFA (30 derniers jours)</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card h-100">
+            <div class="kpi-icon bg-info bg-opacity-10 text-info">
+                <i class="bi bi-people"></i>
+            </div>
+            <h6 class="text-muted small text-uppercase">Nouveaux Clients</h6>
+            <h3 class="fw-bold mb-1">{{ kpis.new_clients_week }}</h3>
+            <p class="mb-0 extra-small text-muted">Cette semaine</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card h-100">
+            <div class="kpi-icon bg-warning bg-opacity-10 text-warning">
+                <i class="bi bi-hammer"></i>
+            </div>
+            <h6 class="text-muted small text-uppercase">Nouveaux Artisans</h6>
+            <h3 class="fw-bold mb-1">{{ kpis.new_artisans_week }}</h3>
+            <p class="mb-0 extra-small text-muted">Inscrits cette semaine</p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold mb-0">Évolution des revenus (30 jours)</h5>
+                <i class="bi bi-graph-up text-primary"></i>
+            </div>
+            <canvas id="revenueChart" style="max-height: 300px;"></canvas>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+            <h5 class="fw-bold mb-4">Alertes Stock Critique</h5>
+            <div class="list-group list-group-flush">
+                {% for product in low_stock %}
+                <div class="list-group-item px-0 border-0 mb-2">
+                    <div class="d-flex align-items-center gap-3">
+                        {% with img=product.images.first %}
+                        <img src="{% if img %}{{ img.image.url }}{% else %}{% static 'img/placeholder.png' %}{% endif %}" 
+                             alt="" class="rounded" style="width: 40px; height: 40px; object-fit: cover;">
+                        {% endwith %}
+                        <div class="flex-grow-1 overflow-hidden">
+                            <p class="mb-0 small fw-bold text-truncate">{{ product.title }}</p>
+                            <p class="mb-0 extra-small text-muted">{{ product.artisan.shop_name }}</p>
+                        </div>
+                        <span class="badge {% if product.stock_quantity == 0 %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                            {{ product.stock_quantity }}
+                        </span>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-center text-muted py-4">Tout est en stock !</p>
+                {% endfor %}
+            </div>
+            <a href="{% url 'dashboard:product_list' %}" class="btn btn-outline-secondary btn-sm w-100 mt-auto">Gérer tout le stock</a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-12">
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold mb-0">Dernières commandes personnalisées à valider</h5>
+                <a href="{% url 'dashboard:custom_orders' %}" class="small text-decoration-none">Tout voir</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="border-0">Réf</th>
+                            <th class="border-0">Client</th>
+                            <th class="border-0">Date Paiement</th>
+                            <th class="border-0">Montant</th>
+                            <th class="border-0 text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in to_validate %}
+                        <tr>
+                            <td class="fw-bold text-primary">{{ order.reference }}</td>
+                            <td>
+                                <div class="small fw-bold">{{ order.delivery_name }}</div>
+                                <div class="extra-small text-muted">{{ order.user.email }}</div>
+                            </td>
+                            <td>{{ order.paid_at|date:"d/m/Y H:i" }}</td>
+                            <td>{{ order.total_amount|floatformat:0 }} FCFA</td>
+                            <td class="text-end">
+                                <a href="{% url 'dashboard:order_detail' order.pk %}" class="btn btn-primary btn-sm rounded-pill px-3">Valider</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">Aucune commande en attente</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    const chartData = {{ chart_30d|safe }};
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: chartData.map(d => d.date),
+            datasets: [{
+                label: 'Revenus (FCFA)',
+                data: chartData.map(d => d.revenue),
+                borderColor: '#c8963e',
+                backgroundColor: 'rgba(200,150,62,0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                yAxisID: 'y'
+            }, {
+                label: 'Commandes',
+                data: chartData.map(d => d.orders),
+                borderColor: '#1a1a2e',
+                borderDash: [5, 5],
+                borderWidth: 2,
+                fill: false,
+                yAxisID: 'y1'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    grid: { drawOnChartArea: false }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

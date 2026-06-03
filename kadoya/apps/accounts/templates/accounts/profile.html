@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Mon Profil — Gagaro{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card auth-card p-4 text-center mb-4">
+                <div class="mb-3">
+                    {% if user.avatar %}
+                        <img src="{{ user.avatar.url }}" alt="{{ user.first_name }}" class="rounded-circle shadow-sm" width="120" height="120">
+                    {% else %}
+                        <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto" style="width: 120px; height: 120px; font-size: 3rem;">
+                            {{ user.first_name|first }}
+                        </div>
+                    {% endif %}
+                </div>
+                <h2 class="h4 mb-1">{{ user.full_name }}</h2>
+                <p class="text-muted mb-3">{{ user.get_role_display }}</p>
+                <div class="badge bg-light text-dark px-3 py-2 fw-normal rounded-pill">
+                    Membre depuis {{ user.created_at|date:"M Y" }}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card auth-card p-4 p-md-5">
+                <h3 class="mb-4">Informations personnelles</h3>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="small text-muted d-block">Email</label>
+                        <p class="h6">{{ user.email }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small text-muted d-block">Téléphone</label>
+                        <p class="h6">{{ user.phone|default:"Non renseigné" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small text-muted d-block">Prénom</label>
+                        <p class="h6">{{ user.first_name }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small text-muted d-block">Nom</label>
+                        <p class="h6">{{ user.last_name }}</p>
+                    </div>
+                </div>
+                
+                <hr class="my-5">
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="h5 mb-1">Actions rapides</h4>
+                        <p class="small text-muted mb-0">Gérez vos préférences et votre compte</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="#" class="btn btn-outline-dark">Modifier le profil</a>
+                        {% if user.is_artisan %}
+                            <a href="{% url 'artisan:dashboard' %}" class="btn btn-kadoya">Aller au Dashboard</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

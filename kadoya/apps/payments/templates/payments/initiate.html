@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Paiement - {{ order.reference }} | Gagaro{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/payment.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="max-w-lg mx-auto" style="max-width: 500px;">
+        <div class="text-center mb-5">
+            <h1 class="h3 fw-bold">Paiement sécurisé</h1>
+            <p class="text-muted">Commande {{ order.reference }}</p>
+            <div class="display-5 fw-bold text-secondary my-3">{{ order.total_amount|floatformat:0 }} FCFA</div>
+            <p class="small">Choisissez votre opérateur et saisissez votre numéro</p>
+        </div>
+
+        <form method="POST" id="payment-form">
+            {% csrf_token %}
+            <div class="row g-3 mb-4">
+                {% for method in payment_methods %}
+                <div class="col-6">
+                    <label class="operator-card w-100 {% if forloop.first %}selected{% endif %}" data-method="{{ method.id }}">
+                        <input type="radio" name="payment_method" value="{{ method.id }}" class="d-none" {% if forloop.first %}checked{% endif %}>
+                        <img src="{{ method.logo }}" alt="{{ method.label }}" class="mb-2 d-block mx-auto">
+                        <div class="fw-bold small">{{ method.label }}</div>
+                        <div class="text-xs text-muted">{{ method.prefix }}</div>
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">Numéro de téléphone</label>
+                <div class="phone-input-wrapper">
+                    <span class="phone-prefix">+237</span>
+                    <input type="text" name="phone_number" class="phone-input" placeholder="6XX XXX XXX" required pattern="[0-9]{9}">
+                </div>
+                <div class="form-text small">Saisissez les 9 chiffres de votre numéro sans l'indicatif.</div>
+            </div>
+
+            <div class="alert alert-info border-0 small mb-4">
+                <i class="bi bi-info-circle me-2"></i>
+                Après confirmation, vous recevrez une notification push sur votre téléphone pour valider le paiement.
+            </div>
+
+            <button type="submit" class="btn btn-secondary btn-lg w-100 py-3 fw-bold text-white">
+                PAYER {{ order.total_amount|floatformat:0 }} FCFA
+            </button>
+            
+            <a href="{% url 'orders:cart' %}" class="btn btn-link w-100 mt-3 text-muted">
+                Annuler — retour à la commande
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.querySelectorAll('.operator-card').forEach(card => {
+        card.addEventListener('click', () => {
+            document.querySelectorAll('.operator-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+        });
+    });
+</script>
+{% endblock %}

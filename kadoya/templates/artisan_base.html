@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/artisan.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="artisan-layout">
+
+  <!-- Sidebar navigation -->
+  <aside class="artisan-sidebar" id="artisan-sidebar">
+    {% include 'artisan/partials/_sidebar.html' %}
+  </aside>
+
+  <!-- Contenu principal -->
+  <main class="artisan-main">
+    <!-- Alertes Django messages -->
+    {% include 'partials/_messages.html' %}
+
+    <!-- Contenu de la page courante -->
+    {% block artisan_content %}{% endblock %}
+  </main>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Sidebar toggle for mobile
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const sidebar = document.getElementById('artisan-sidebar');
+    if (sidebarToggle && sidebar) {
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+        });
+    }
+</script>
+{% endblock %}

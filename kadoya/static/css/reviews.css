@@ -1,0 +1,278 @@
+/* === REVIEW CARD === */
+.review-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  border: 1px solid #f0f0f0;
+}
+
+.review-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.review-avatar {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: #c8963e; /* Kadoya Gold */
+  color: #1a1a2e; /* Kadoya Dark */
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: .9rem;
+  flex-shrink: 0;
+}
+
+.review-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: .5rem;
+  color: #1a1a2e;
+}
+
+.review-body {
+  color: #555;
+  line-height: 1.6;
+  font-size: .95rem;
+}
+
+/* === REVIEW PHOTOS === */
+.review-photos {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.review-photo-thumb {
+  width: 80px; height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  border: 1px solid #eee;
+}
+
+.review-photo-thumb:hover { transform: scale(1.05); }
+
+/* === ARTISAN REPLY === */
+.artisan-reply {
+  background: #f8f9fa;
+  border-left: 4px solid #c8963e;
+  border-radius: 4px 12px 12px 4px;
+  padding: 1rem;
+  margin-top: 1.25rem;
+  font-size: .9rem;
+}
+
+/* === RATING STARS (interactif) === */
+.star-display i {
+  font-size: 2.5rem;
+  cursor: pointer;
+  transition: color .15s ease;
+}
+
+.rating-label {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: .5rem;
+  min-height: 1.5em;
+  transition: color 0.2s;
+}
+
+.rating-label.rating-1, .rating-label.rating-2 { color: #dc3545; }
+.rating-label.rating-3                          { color: #ffc107; }
+.rating-label.rating-4, .rating-label.rating-5 { color: #198754; }
+
+/* === PHOTO UPLOAD SLOTS === */
+.review-photo-slots {
+  display: flex;
+  gap: 1rem;
+}
+
+.review-photo-slot {
+  width: 100px; height: 100px;
+  border: 2px dashed #ddd;
+  border-radius: 12px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  background: #fafafa;
+  gap: .25rem;
+  font-size: .75rem;
+  color: #999;
+}
+
+.review-photo-slot:hover { 
+    border-color: #c8963e; 
+    background: #fff;
+    color: #c8963e;
+}
+
+.review-photo-slot.has-photo { border-style: solid; border-color: #eee; }
+
+.clear-photo {
+  position: absolute;
+  top: -8px; right: -8px;
+  width: 24px; height: 24px;
+  background: #dc3545;
+  color: white;
+  border-radius: 50%;
+  border: 2px solid white;
+  font-size: .8rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 10;
+}
+
+/* === REVIEW SUMMARY === */
+.review-summary {
+  display: flex;
+  gap: 2.5rem;
+  align-items: center;
+  background: #fff;
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  border: 1px solid #eee;
+}
+
+.score-value {
+  font-size: 4rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  line-height: 1;
+}
+
+.score-max { color: #ccc; font-size: 1.5rem; }
+
+.rating-bar-row {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-bottom: .5rem;
+}
+
+.rating-bar-label  { width: 30px; font-size: .85rem; color: #666; text-align: right; }
+
+.rating-bar-track {
+  flex: 1;
+  background: #f0f0f0;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.rating-bar-fill {
+  height: 100%;
+  background: #c8963e;
+  border-radius: 5px;
+  transition: width .8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* === TIMELINE SUIVI === */
+.tracking-timeline {
+  position: relative;
+  padding: 0;
+  list-style: none;
+}
+
+.tracking-timeline::before {
+  content: '';
+  position: absolute;
+  left: 23px; top: 0; bottom: 0;
+  width: 2px;
+  background: #eee;
+}
+
+.timeline-item {
+  display: flex;
+  gap: 1.5rem;
+  padding: 0 0 2.5rem 0;
+  position: relative;
+}
+
+.timeline-icon {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  border: 4px solid white;
+  box-shadow: 0 0 0 2px #eee;
+  background: white;
+  color: #ddd;
+}
+
+.timeline-item.completed .timeline-icon {
+  background: #198754;
+  color: white;
+  box-shadow: 0 0 0 2px #198754;
+}
+
+.timeline-item.active .timeline-icon {
+  background: #c8963e;
+  color: white;
+  box-shadow: 0 0 0 2px #c8963e;
+  animation: pulse-gold 2s infinite;
+}
+
+@keyframes pulse-gold {
+  0% { box-shadow: 0 0 0 0 rgba(200, 150, 62, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(200, 150, 62, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(200, 150, 62, 0); }
+}
+
+.timeline-content { padding-top: .4rem; }
+.timeline-label   { font-weight: 700; color: #1a1a2e; font-size: 1.05rem; }
+
+/* === ORDER HISTORY CARDS === */
+.order-history-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
+}
+
+.order-history-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(26,26,46,0.08);
+}
+
+.order-thumbnails {
+  display: flex;
+  gap: .5rem;
+}
+
+.order-thumb {
+  width: 56px; height: 56px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #eee;
+}
+
+.order-thumb-more {
+    width: 56px; height: 56px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; color: #666;
+    font-size: .9rem;
+    border: 1px solid #eee;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .review-summary { flex-direction: column; gap: 1.5rem; padding: 1.5rem; }
+    .review-photo-slots { flex-wrap: wrap; }
+    .star-display i { font-size: 2rem; }
+}

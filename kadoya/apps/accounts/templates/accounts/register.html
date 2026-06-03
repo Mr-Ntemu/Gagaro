@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Inscription — Gagaro{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center py-5">
+        <div class="col-md-7 col-lg-6">
+            <div class="card auth-card p-4 p-md-5">
+                <div class="text-center mb-5">
+                    <h2 class="h3">Rejoignez Gagaro</h2>
+                    <p class="text-muted">Choisissez votre profil pour commencer l'aventure</p>
+                </div>
+                
+                <form method="POST" id="register-form">
+                    {% csrf_token %}
+                    {{ form.role }} <!-- Hidden field -->
+                    
+                    <div class="row g-4 mb-5">
+                        <div class="col-md-6">
+                            <div class="card h-100 role-card p-4 text-center active" data-role="client">
+                                <div class="mb-3 text-secondary">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                </div>
+                                <h4 class="h5">Client</h4>
+                                <p class="small text-muted mb-0">Je souhaite acheter des cadeaux uniques.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100 role-card p-4 text-center" data-role="artisan">
+                                <div class="mb-3 text-secondary">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                                </div>
+                                <h4 class="h5">Artisan</h4>
+                                <p class="small text-muted mb-0">Je souhaite vendre mes confections.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Prénom</label>
+                            <input type="text" name="first_name" class="form-control form-control-lg" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nom</label>
+                            <input type="text" name="last_name" class="form-control form-control-lg" required>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control form-control-lg {% if form.email.errors %}is-invalid{% endif %}" required>
+                            {% for error in form.email.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Téléphone</label>
+                            <input type="text" name="phone" class="form-control form-control-lg">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Mot de passe</label>
+                            <input type="password" name="password1" class="form-control form-control-lg {% if form.password1.errors %}is-invalid{% endif %}" required>
+                            {% for error in form.password1.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Confirmation</label>
+                            <input type="password" name="password2" class="form-control form-control-lg {% if form.password2.errors %}is-invalid{% endif %}" required>
+                            {% for error in form.password2.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-kadoya btn-lg w-100 mt-4 mb-3">Créer mon compte</button>
+                    
+                    <p class="text-center mb-0 text-muted">
+                        Déjà un compte ? <a href="{% url 'accounts:login' %}" class="text-dark fw-bold text-decoration-none">Connectez-vous</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.querySelectorAll('.role-card').forEach(card => {
+        card.addEventListener('click', () => {
+            document.querySelectorAll('.role-card').forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+            document.getElementById('id_role').value = card.dataset.role;
+        });
+    });
+</script>
+{% endblock %}

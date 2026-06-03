@@ -1,0 +1,39 @@
+<div class="cart-item" id="cart-item-{{ item.id }}">
+  <div class="cart-item-img-wrapper">
+    {% if item.customization_session.uploaded_photo_thumb %}
+      <img src="{{ item.customization_session.uploaded_photo_thumb.url }}" class="cart-item-img">
+    {% elif item.product.cover_image %}
+      <img src="{{ item.product.cover_image.image.url }}" class="cart-item-img">
+    {% endif %}
+  </div>
+  
+  <div class="cart-item-info">
+    <h5 class="mb-1">{{ item.product.title }}</h5>
+    {% if item.is_customized %}
+      <span class="badge bg-soft-secondary text-secondary mb-2">Personnalisé</span>
+      <div class="text-xs text-muted">
+        Cadre: {{ item.customization_session.frame_option.label }}
+      </div>
+    {% endif %}
+    <div class="mt-2 d-sm-none">
+      <strong>{{ item.unit_price|floatformat:0 }} FCFA</strong>
+    </div>
+  </div>
+
+  <div class="cart-item-actions d-flex align-items-center gap-4">
+    <div class="qty-wrapper">
+      <button type="button" class="qty-btn" data-action="dec" data-item-id="{{ item.id }}">-</button>
+      <input type="text" class="qty-input" value="{{ item.quantity }}" readonly>
+      <button type="button" class="qty-btn" data-action="inc" data-item-id="{{ item.id }}">+</button>
+    </div>
+
+    <div class="cart-item-price d-none d-sm-block text-end" style="min-width: 100px;">
+      <div class="text-muted small mb-1">{{ item.unit_price|floatformat:0 }} FCFA</div>
+      <strong id="line-total-{{ item.id }}">{{ item.line_total|floatformat:0 }} FCFA</strong>
+    </div>
+
+    <button type="button" class="btn btn-link text-danger p-0" onclick="removeItem({{ item.id }})">
+      <i class="bi bi-trash3"></i>
+    </button>
+  </div>
+</div>

@@ -1,0 +1,28 @@
+<div class="review-summary">
+  <div class="review-score text-center">
+    <div class="d-flex align-items-baseline justify-content-center">
+        <span class="score-value">{{ review_stats.avg_rating }}</span>
+        <span class="score-max">/5</span>
+    </div>
+    <div class="score-stars mb-2">
+      {% for i in "12345" %}
+        <i class="bi bi-star{% if forloop.counter <= review_stats.avg_rating|floatformat:0|add:0 %}-fill text-warning{% else %}-fill text-light{% endif %}"></i>
+      {% endfor %}
+    </div>
+    <p class="score-count text-muted small">{{ review_stats.review_count }} avis clients</p>
+  </div>
+
+  <div class="rating-bars flex-grow-1">
+    {% for star, count in rating_distribution.items %}
+      <div class="rating-bar-row">
+        <span class="rating-bar-label">{{ star }}★</span>
+        <div class="rating-bar-track">
+          <div class="rating-bar-fill"
+               style="width: {% if review_stats.review_count > 0 %}{% widthratio count review_stats.review_count 100 %}%{% else %}0%{% endif %}">
+          </div>
+        </div>
+        <span class="rating-bar-count text-muted small ms-2">{{ count }}</span>
+      </div>
+    {% endfor %}
+  </div>
+</div>

@@ -1,0 +1,213 @@
+{% extends 'artisan_base.html' %}
+{% load crispy_forms_tags %}
+
+{% block artisan_content %}
+<div class="d-flex align-items-center gap-3 mb-4">
+    <a href="{% url 'artisan:product_list' %}" class="btn btn-outline-dark btn-sm"><i class="bi bi-arrow-left"></i></a>
+    <h1 class="h3 mb-0">Déposer un nouveau produit</h1>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    
+    <div class="row">
+        <!-- Formulaire principal -->
+        <div class="col-lg-8">
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+            
+            <div class="card shadow-sm border-0 p-4 mb-4">
+                <h5 class="mb-4">Informations générales</h5>
+                <div class="row">
+                    <div class="col-12 mb-3">
+                        {{ form.title|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.category|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.tags|as_crispy_field }}
+                    </div>
+                    <div class="col-12 mb-3">
+                        {{ form.description|as_crispy_field }}
+                    </div>
+                </div>
+
+                <h5 class="mt-4 mb-4">Tarification & Stock</h5>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.base_price|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.discounted_price|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.stock_quantity|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.is_customizable|as_crispy_field }}
+                    </div>
+                </div>
+
+                <h5 class="mt-4 mb-4">Logistique</h5>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.dimensions|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.weight_grams|as_crispy_field }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Personnalisation (FrameOptions) -->
+            <div id="customization-section" class="card shadow-sm border-0 p-4 mb-4 {% if not form.is_customizable.value %}d-none{% endif %}">
+                <h5 class="mb-4">Options de personnalisation (Cadres)</h5>
+                {{ frame_formset.management_form }}
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Label</th>
+                                <th>Dimensions (cm)</th>
+                                <th>Matière</th>
+                                <th>Prix suppl.</th>
+                                <th>Dispo</th>
+                                <th>Suppr.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for f_form in frame_formset %}
+                            <tr class="frame-form-row">
+                                {% for field in f_form.visible_fields %}
+                                <td>
+                                    {{ field }}
+                                    {% if field.errors %}
+                                    <div class="text-danger small">{{ field.errors }}</div>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                                {% for hidden in f_form.hidden_fields %}
+                                    {{ hidden }}
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Images -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 p-4 sticky-top" style="top: 80px;">
+                <h5 class="mb-4">Images du produit</h5>
+                <p class="small text-muted">Ajoutez jusqu'à 8 images. La première sera la couverture.</p>
+                
+                {{ image_formset.management_form }}
+                {% if image_formset.non_form_errors %}
+                <div class="alert alert-danger small">
+                    {{ image_formset.non_form_errors }}
+                </div>
+                {% endif %}
+
+                <div class="image-upload-grid">
+                    {% for img_form in image_formset %}
+                    <div class="image-upload-slot mb-3 p-3 border rounded text-center">
+                        {% for hidden in img_form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
+                        
+                        <div class="mb-2">
+                            {{ img_form.image }}
+                            {% if img_form.image.errors %}
+                            <div class="text-danger small mt-1">{{ img_form.image.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="small">
+                            {{ img_form.alt_text }}
+                            {% if img_form.alt_text.errors %}
+                            <div class="text-danger mt-1">{{ img_form.alt_text.errors }}</div>
+                            {% endif %}
+                        </div>
+                        {% if img_form.non_field_errors %}
+                        <div class="text-danger small mt-1">{{ img_form.non_field_errors }}</div>
+                        {% endif %}
+                        <div class="mt-2 d-flex justify-content-between align-items-center">
+                            <div class="form-check small">
+                                {{ img_form.is_cover }} <label class="form-check-label">Couv.</label>
+                            </div>
+                            {% if image_formset.can_delete %}
+                            <div class="form-check small text-danger">
+                                {{ img_form.DELETE }} <label class="form-check-label">Suppr.</label>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="alert alert-warning small mt-4">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Votre produit sera soumis à validation avant publication. 
+                    Ce processus prend généralement 24h.
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary py-3 fw-bold">Publier le produit</button>
+                    <a href="{% url 'artisan:product_list' %}" class="btn btn-light py-3">Annuler</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    // Toggle customization section
+    const isCustomizableCheck = document.querySelector('input[name="is_customizable"]');
+    const customSection = document.getElementById('customization-section');
+    
+    if (isCustomizableCheck && customSection) {
+        isCustomizableCheck.addEventListener('change', () => {
+            if (isCustomizableCheck.checked) {
+                customSection.classList.remove('d-none');
+            } else {
+                customSection.classList.add('d-none');
+            }
+        });
+    }
+
+    // Image preview (simple version)
+    document.querySelectorAll('input[type="file"]').forEach(input => {
+        input.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const slot = input.closest('.image-upload-slot');
+                    let preview = slot.querySelector('.preview-img');
+                    if (!preview) {
+                        preview = document.createElement('img');
+                        preview.className = 'preview-img mb-2 rounded w-100';
+                        preview.style.height = '100px';
+                        preview.style.objectFit = 'cover';
+                        slot.prepend(preview);
+                    }
+                    preview.src = e.target.result;
+                }
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    });
+</script>
+<style>
+    .image-upload-slot { position: relative; background: #f8f9fa; border: 1px dashed #dee2e6 !important; }
+    .image-upload-slot:hover { border-color: var(--kadoya-secondary) !important; background: #fff; }
+    .image-upload-slot input[type="file"] { font-size: 0.8rem; width: 100%; }
+</style>
+{% endblock %}

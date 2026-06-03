@@ -1,0 +1,7 @@
+{% for product in products %}
+    {% include 'catalogue/partials/_product_card.html' with product=product %}
+{% empty %}
+    <div class="col-12 py-5">
+        {% include 'catalogue/includes/_no_results.html' %}
+    </div>
+{% endfor %}

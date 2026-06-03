@@ -1,0 +1,50 @@
+<div class="sidebar-header">
+  {% if artisan_profile.shop_banner %}
+    <img src="{{ artisan_profile.shop_banner.url }}" class="sidebar-banner" alt="Bannière atelier">
+  {% endif %}
+  <div class="sidebar-identity">
+    {% if request.user.avatar %}
+    <img src="{{ request.user.avatar.url }}" class="sidebar-avatar" alt="Avatar">
+    {% else %}
+    <img src="/static/img/avatar-default.svg" class="sidebar-avatar" alt="Avatar">
+    {% endif %}
+    <div>
+      <p class="sidebar-shop-name">{{ artisan_profile.shop_name|default:request.user.full_name }}</p>
+      <span class="sidebar-badge {% if artisan_profile.is_verified %}verified{% endif %}">
+        {% if artisan_profile.is_verified %}✓ Vérifié{% else %}En attente{% endif %}
+      </span>
+    </div>
+  </div>
+</div>
+
+<nav class="sidebar-nav">
+  <a href="{% url 'artisan:dashboard' %}"
+     class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+    <i class="bi bi-grid-1x2"></i> Tableau de bord
+  </a>
+  <a href="{% url 'artisan:product_list' %}"
+     class="sidebar-link {% if 'product' in request.resolver_match.url_name %}active{% endif %}">
+    <i class="bi bi-box-seam"></i> Mes produits
+    <span class="badge bg-secondary ms-auto">{{ kpis.products_active }}</span>
+  </a>
+  <a href="{% url 'artisan:sales' %}"
+     class="sidebar-link {% if request.resolver_match.url_name == 'sales' %}active{% endif %}">
+    <i class="bi bi-bag-check"></i> Ventes
+    {% if kpis.orders_pending %}
+      <span class="badge bg-warning ms-auto">{{ kpis.orders_pending }}</span>
+    {% endif %}
+  </a>
+  <a href="{% url 'artisan:financial' %}"
+     class="sidebar-link {% if request.resolver_match.url_name == 'financial' %}active{% endif %}">
+    <i class="bi bi-wallet2"></i> Finances
+  </a>
+  <a href="{% url 'artisan:profile_edit' %}"
+     class="sidebar-link {% if request.resolver_match.url_name == 'profile_edit' %}active{% endif %}">
+    <i class="bi bi-shop"></i> Mon atelier
+  </a>
+</nav>
+
+<!-- Bouton mobile toggle -->
+<button class="sidebar-toggle d-lg-none" id="sidebar-toggle">
+  <i class="bi bi-layout-sidebar"></i>
+</button>
