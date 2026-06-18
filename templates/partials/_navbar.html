@@ -53,6 +53,12 @@
                         </li>
                         <li><a class="dropdown-item" href="{% url 'artisan:dashboard' %}">Dashboard Artisan</a></li>
                         {% endif %}
+                        {% if user.role == 'admin' or user.is_staff %}
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item fw-bold" href="/kadmin/"><i class="bi bi-speedometer2 me-2"></i>Dashboard Admin</a></li>
+                        {% endif %}
                         <li>
                             <hr class="dropdown-divider">
                         </li>

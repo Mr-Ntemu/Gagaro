@@ -9,7 +9,7 @@ class AuthService:
         Pour l'instant, tout le monde va sur la home (/).
         """
         if user.role == UserRole.ADMIN:
-            return '/admin/'
+            return '/kadmin/'
         elif user.role == UserRole.ARTISAN:
             return reverse('artisan:dashboard')
         return reverse('core:home')

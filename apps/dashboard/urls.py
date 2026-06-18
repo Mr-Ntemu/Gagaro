@@ -5,6 +5,9 @@ from apps.dashboard.views import (
     AdminPromoListView, AdminPromoCreateView, AdminPromoEditView, AdminTogglePromoView,
     AdminArtisanListView, AdminVerifyArtisanView, AdminWithdrawalListView, AdminProcessWithdrawalView,
     AdminNotificationListView, AdminMarkNotifReadView, AdminMarkAllNotifsReadView,
+    AdminUserListView, AdminUserDetailView, AdminToggleUserActiveView, AdminChangeUserRoleView,
+    AdminCategoryListView, AdminCategoryCreateView, AdminCategoryEditView, AdminToggleCategoryView,
+    AdminPaymentListView, AdminPaymentDetailView,
 )
 from apps.reviews.views import (
     AdminReviewModerationView, AdminReviewApproveView, AdminReviewRejectView
@@ -34,6 +37,32 @@ urlpatterns = [
          AdminValidateProductView.as_view(), name='product_validate'),
     path('produits/stock/',
          AdminUpdateStockView.as_view(), name='update_stock'),
+
+    # Utilisateurs
+    path('utilisateurs/',
+         AdminUserListView.as_view(), name='user_list'),
+    path('utilisateurs/<int:pk>/',
+         AdminUserDetailView.as_view(), name='user_detail'),
+    path('utilisateurs/<int:pk>/toggle/',
+         AdminToggleUserActiveView.as_view(), name='user_toggle'),
+    path('utilisateurs/<int:pk>/role/',
+         AdminChangeUserRoleView.as_view(), name='user_role'),
+
+    # Catégories
+    path('categories/',
+         AdminCategoryListView.as_view(), name='category_list'),
+    path('categories/nouveau/',
+         AdminCategoryCreateView.as_view(), name='category_create'),
+    path('categories/<int:pk>/modifier/',
+         AdminCategoryEditView.as_view(), name='category_edit'),
+    path('categories/<int:pk>/toggle/',
+         AdminToggleCategoryView.as_view(), name='category_toggle'),
+
+    # Paiements
+    path('paiements/',
+         AdminPaymentListView.as_view(), name='payment_list'),
+    path('paiements/<int:pk>/',
+         AdminPaymentDetailView.as_view(), name='payment_detail'),
 
     # Promotions
     path('promos/',

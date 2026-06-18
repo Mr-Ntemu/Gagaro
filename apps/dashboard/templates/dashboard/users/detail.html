@@ -1,0 +1,166 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}{{ target_user.full_name|default:target_user.email }} — Gagaro Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <a href="{% url 'dashboard:user_list' %}" class="text-decoration-none text-muted small">
+            <i class="bi bi-arrow-left me-1"></i>Retour à la liste
+        </a>
+        <h2 class="h4 mb-0 fw-bold mt-1">{{ target_user.full_name|default:target_user.email }}</h2>
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+        <span class="badge bg-{% if target_user.role == 'admin' %}danger{% elif target_user.role == 'artisan' %}warning text-dark{% else %}secondary{% endif %} fs-6">
+            {{ target_user.get_role_display }}
+        </span>
+        <div class="form-check form-switch">
+            <input class="form-check-input user-toggle" type="checkbox" data-id="{{ target_user.id }}" {% if target_user.is_active %}checked{% endif %}>
+            <label class="small text-muted ms-1 toggle-label">{% if target_user.is_active %}Actif{% else %}Inactif{% endif %}</label>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Infos personnelles -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+            <h6 class="fw-bold mb-3"><i class="bi bi-person me-2"></i>Informations</h6>
+            <div class="bg-light rounded-3 p-3">
+                <div class="row g-2 small">
+                    <div class="col-5 text-muted">Email :</div>
+                    <div class="col-7 fw-bold">{{ target_user.email }}</div>
+                    <div class="col-5 text-muted">Nom complet :</div>
+                    <div class="col-7 fw-bold">{{ target_user.full_name|default:"—" }}</div>
+                    <div class="col-5 text-muted">Téléphone :</div>
+                    <div class="col-7 fw-bold">{{ target_user.phone|default:"—" }}</div>
+                    <div class="col-5 text-muted">Inscrit le :</div>
+                    <div class="col-7 fw-bold">{{ target_user.created_at|date:"d/m/Y à H:i" }}</div>
+                    <div class="col-5 text-muted">Dernière MAJ :</div>
+                    <div class="col-7 fw-bold">{{ target_user.updated_at|date:"d/m/Y à H:i" }}</div>
+                    <div class="col-5 text-muted">Staff :</div>
+                    <div class="col-7 fw-bold">{% if target_user.is_staff %}<span class="text-success">Oui</span>{% else %}Non{% endif %}</div>
+                </div>
+            </div>
+
+            {% if target_user.role != 'admin' %}
+            <div class="mt-3">
+                <label class="form-label small fw-bold text-muted">Changer le rôle</label>
+                <select class="form-select form-select-sm role-select" data-id="{{ target_user.id }}">
+                    <option value="client" {% if target_user.role == 'client' %}selected{% endif %}>Client</option>
+                    <option value="artisan" {% if target_user.role == 'artisan' %}selected{% endif %}>Artisan</option>
+                    <option value="admin" {% if target_user.role == 'admin' %}selected{% endif %}>Administrateur</option>
+                </select>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Profil artisan -->
+    {% if artisan_profile %}
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+            <h6 class="fw-bold mb-3"><i class="bi bi-shop me-2"></i>Profil Artisan</h6>
+            <div class="bg-light rounded-3 p-3">
+                <div class="row g-2 small">
+                    <div class="col-5 text-muted">Boutique :</div>
+                    <div class="col-7 fw-bold">{{ artisan_profile.shop_name }}</div>
+                    <div class="col-5 text-muted">Ville :</div>
+                    <div class="col-7 fw-bold">{{ artisan_profile.city|default:"—" }}</div>
+                    <div class="col-5 text-muted">Vérifié :</div>
+                    <div class="col-7 fw-bold">
+                        {% if artisan_profile.is_verified %}
+                        <span class="text-success"><i class="bi bi-check-circle"></i> Oui</span>
+                        {% else %}Non{% endif %}
+                    </div>
+                    <div class="col-5 text-muted">Ventes :</div>
+                    <div class="col-7 fw-bold">{{ artisan_profile.total_sales_count }}</div>
+                    <div class="col-5 text-muted">Revenu total :</div>
+                    <div class="col-7 fw-bold">{{ artisan_profile.total_revenue|floatformat:0 }} FCFA</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Commandes récentes -->
+    <div class="col-lg-{% if artisan_profile %}4{% else %}8{% endif %}">
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+            <h6 class="fw-bold mb-3"><i class="bi bi-cart3 me-2"></i>Commandes récentes</h6>
+            {% for order in recent_orders %}
+            <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                <div>
+                    <span class="fw-bold small">{{ order.reference }}</span>
+                    <span class="text-muted small ms-2">{{ order.created_at|date:"d/m" }}</span>
+                </div>
+                <div class="text-end">
+                    <span class="fw-bold small">{{ order.total_amount|floatformat:0 }} FCFA</span>
+                    <span class="badge bg-{% if order.status == 'delivered' %}success{% elif order.status == 'cancelled' %}danger{% else %}warning text-dark{% endif %} ms-2" style="font-size: 0.65rem;">
+                        {{ order.get_status_display }}
+                    </span>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-muted small text-center py-3">Aucune commande</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Avis récents -->
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+            <h6 class="fw-bold mb-3"><i class="bi bi-star me-2"></i>Avis récents</h6>
+            {% for review in recent_reviews %}
+            <div class="d-flex gap-3 py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                <div class="text-warning">
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+                    {% endfor %}
+                </div>
+                <div>
+                    <span class="fw-bold small">{{ review.title|default:"Sans titre" }}</span>
+                    <span class="text-muted small ms-2">— {{ review.product.title }}</span>
+                    <p class="mb-0 small text-muted mt-1">{{ review.body|truncatewords:20 }}</p>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-muted small text-center py-3">Aucun avis</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Toggle active
+    document.querySelector('.user-toggle').addEventListener('change', function() {
+        const id = this.dataset.id;
+        const label = this.parentElement.querySelector('.toggle-label');
+        fetch(`/kadmin/utilisateurs/${id}/toggle/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if(data.success) label.innerText = data.label;
+        });
+    });
+
+    // Change role
+    document.querySelector('.role-select')?.addEventListener('change', function() {
+        const id = this.dataset.id;
+        const formData = new FormData();
+        formData.append('role', this.value);
+        fetch(`/kadmin/utilisateurs/${id}/role/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+            body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+            if(data.success) location.reload();
+        });
+    });
+</script>
+{% endblock %}

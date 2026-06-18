@@ -100,24 +100,31 @@ class ProductCreateView(ArtisanRequiredMixin, View):
     def post(self, request):
         form          = ProductCreateForm(request.user, request.POST, request.FILES)
         image_formset = ProductImageFormSet(request.POST, request.FILES)
-        frame_formset = FrameOptionFormSet(request.POST)
+        is_customizable = request.POST.get('is_customizable') == 'on'
+        frame_formset = FrameOptionFormSet(request.POST) if is_customizable else None
 
-        if form.is_valid() and image_formset.is_valid() and frame_formset.is_valid():
+        all_valid = form.is_valid() and image_formset.is_valid()
+        if is_customizable and frame_formset is not None:
+            all_valid = all_valid and frame_formset.is_valid()
+
+        if all_valid:
             product = form.save()
 
             # Sauvegarder les images
             images = image_formset.save(commit=False)
-            for img in images:
+            for i, img in enumerate(images):
                 img.product = product
+                img.order = i
                 img.save()
             for deleted in image_formset.deleted_objects:
                 deleted.delete()
 
             # Sauvegarder les options de cadre (si produit personnalisable)
-            if product.is_customizable:
+            if is_customizable and frame_formset is not None:
                 frames = frame_formset.save(commit=False)
-                for frame in frames:
+                for i, frame in enumerate(frames):
                     frame.product = product
+                    frame.order = i
                     frame.save()
                 for deleted in frame_formset.deleted_objects:
                     deleted.delete()
@@ -132,7 +139,7 @@ class ProductCreateView(ArtisanRequiredMixin, View):
         return render(request, self.template_name, {
             'form':          form,
             'image_formset': image_formset,
-            'frame_formset': frame_formset,
+            'frame_formset': frame_formset if frame_formset is not None else FrameOptionFormSet(),
         })
 
 
@@ -179,8 +186,9 @@ class ProductEditView(ArtisanRequiredMixin, View):
             updated = form.save()
 
             images = image_formset.save(commit=False)
-            for img in images:
+            for i, img in enumerate(images):
                 img.product = updated
+                img.order = i
                 img.save()
             for deleted in image_formset.deleted_objects:
                 deleted.delete()

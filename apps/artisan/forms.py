@@ -114,7 +114,7 @@ class ProductCreateForm(forms.ModelForm):
         """Injecte l'artisan et génère le slug automatiquement."""
         product = super().save(commit=False)
         product.artisan = self.artisan
-        product.status  = Product.ProductStatus.PUBLISHED  # en attente review admin
+        product.status  = Product.ProductStatus.DRAFT  # en attente review admin
 
         # Générer un slug unique
         from django.utils.text import slugify
@@ -134,7 +134,7 @@ class ProductCreateForm(forms.ModelForm):
 ProductImageFormSet = inlineformset_factory(
     parent_model = Product,
     model        = ProductImage,
-    fields       = ['image', 'alt_text', 'is_cover', 'order'],
+    fields       = ['image', 'alt_text', 'is_cover'],
     extra        = 4,       # 4 slots d'upload vides par défaut
     max_num      = 8,       # max 8 images par produit
     can_delete   = True,
@@ -143,18 +143,26 @@ ProductImageFormSet = inlineformset_factory(
             'class': 'form-control form-control-sm',
             'placeholder': 'Légende (optionnel)'
         }),
-        'order': forms.NumberInput(attrs={
-            'class': 'form-control form-control-sm', 'min': 0
-        }),
     }
 )
 
 
-FrameOptionFormSet = inlineformset_factory(
+class SkipEmptyFrameForm(forms.ModelForm):
+    """Form qui se considère vide si pas de label."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.empty_permitted = True
+
+    def has_changed(self):
+        return bool(self.data.get('label'))
+
+
+FrameOptionFormSet = forms.inlineformset_factory(
     parent_model = Product,
     model        = FrameOption,
+    form         = SkipEmptyFrameForm,
     fields       = ['label', 'width_cm', 'height_cm',
-                     'material', 'extra_price', 'is_available', 'order'],
+                     'material', 'extra_price', 'is_available'],
     extra        = 3,
     max_num      = 10,
     can_delete   = True,

@@ -387,6 +387,269 @@ class AdminMarkAllNotifsReadView(AdminRequiredMixin, View):
         return JsonResponse({'success': True, 'marked': count})
 
 
+# ── Utilisateurs ──────────────────────────────────────────────────────────────
+
+class AdminUserListView(AdminRequiredMixin, ListView):
+    """GET /kadmin/utilisateurs/ — Tous les utilisateurs."""
+    template_name       = 'dashboard/users/list.html'
+    paginate_by         = 25
+    context_object_name = 'users'
+
+    def get_queryset(self):
+        from apps.accounts.models import KadoyaUser
+        qs = KadoyaUser.objects.select_related().order_by('-created_at')
+        role = self.request.GET.get('role')
+        if role:
+            qs = qs.filter(role=role)
+        search = self.request.GET.get('q')
+        if search:
+            qs = qs.filter(
+                Q(email__icontains=search)
+                | Q(first_name__icontains=search)
+                | Q(last_name__icontains=search)
+                | Q(phone__icontains=search)
+            )
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        from apps.accounts.models import UserRole
+        ctx['role_choices'] = UserRole.choices
+        ctx['role_filter']  = self.request.GET.get('role', '')
+        ctx['search_query'] = self.request.GET.get('q', '')
+        return ctx
+
+
+class AdminUserDetailView(AdminRequiredMixin, View):
+    """GET /kadmin/utilisateurs/<pk>/ — Détail utilisateur."""
+    template_name = 'dashboard/users/detail.html'
+
+    def get(self, request, pk):
+        from apps.accounts.models import KadoyaUser
+        user = get_object_or_404(KadoyaUser, pk=pk)
+        ctx = {'target_user': user}
+        if user.is_artisan:
+            from apps.artisan.models import ArtisanProfile
+            ctx['artisan_profile'] = ArtisanProfile.objects.filter(user=user).first()
+        from apps.orders.models import Order
+        ctx['recent_orders'] = Order.objects.filter(user=user).order_by('-created_at')[:5]
+        from apps.reviews.models import Review
+        ctx['recent_reviews'] = Review.objects.filter(user=user).select_related('product').order_by('-created_at')[:5]
+        return render(request, self.template_name, ctx)
+
+
+class AdminToggleUserActiveView(AdminRequiredMixin, View):
+    """POST AJAX /kadmin/utilisateurs/<pk>/toggle/"""
+
+    def post(self, request, pk):
+        from apps.accounts.models import KadoyaUser
+        user = get_object_or_404(KadoyaUser, pk=pk)
+        user.is_active = not user.is_active
+        user.save(update_fields=['is_active'])
+        return JsonResponse({
+            'success':   True,
+            'is_active': user.is_active,
+            'label':     'Actif' if user.is_active else 'Inactif',
+        })
+
+
+class AdminChangeUserRoleView(AdminRequiredMixin, View):
+    """POST AJAX /kadmin/utilisateurs/<pk>/role/"""
+
+    def post(self, request, pk):
+        from apps.accounts.models import KadoyaUser, UserRole
+        user = get_object_or_404(KadoyaUser, pk=pk)
+        new_role = request.POST.get('role')
+        if new_role not in dict(UserRole.choices):
+            return JsonResponse({'success': False, 'error': 'Rôle invalide'}, status=400)
+        user.role = new_role
+        if new_role == UserRole.ADMIN:
+            user.is_staff = True
+        user.save(update_fields=['role', 'is_staff'])
+        return JsonResponse({
+            'success': True,
+            'new_role': user.get_role_display(),
+        })
+
+
+# ── Catégories ────────────────────────────────────────────────────────────────
+
+class AdminCategoryListView(AdminRequiredMixin, ListView):
+    """GET /kadmin/categories/ — Toutes les catégories."""
+    template_name       = 'dashboard/categories/list.html'
+    context_object_name = 'categories'
+
+    def get_queryset(self):
+        from apps.catalogue.models import Category
+        return Category.objects.prefetch_related('products').order_by('order', 'name')
+
+
+class AdminCategoryCreateView(AdminRequiredMixin, View):
+    """GET/POST /kadmin/categories/nouveau/"""
+    template_name = 'dashboard/categories/form.html'
+
+    def get(self, request):
+        from apps.catalogue.models import Category
+        from django import forms
+        class CategoryForm(forms.ModelForm):
+            class Meta:
+                model  = Category
+                fields = ['name', 'slug', 'type', 'description', 'icon', 'cover_image', 'is_active', 'order']
+                widgets = {
+                    'name':        forms.TextInput(attrs={'class': 'form-control'}),
+                    'slug':        forms.TextInput(attrs={'class': 'form-control'}),
+                    'type':        forms.Select(attrs={'class': 'form-select'}),
+                    'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+                    'icon':        forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'bi-image'}),
+                    'cover_image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+                    'is_active':   forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+                    'order':       forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+                }
+        return render(request, self.template_name, {
+            'form': CategoryForm(), 'action': 'Créer'
+        })
+
+    def post(self, request):
+        from apps.catalogue.models import Category
+        from django import forms
+        class CategoryForm(forms.ModelForm):
+            class Meta:
+                model  = Category
+                fields = ['name', 'slug', 'type', 'description', 'icon', 'cover_image', 'is_active', 'order']
+                widgets = {
+                    'name':        forms.TextInput(attrs={'class': 'form-control'}),
+                    'slug':        forms.TextInput(attrs={'class': 'form-control'}),
+                    'type':        forms.Select(attrs={'class': 'form-select'}),
+                    'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+                    'icon':        forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'bi-image'}),
+                    'cover_image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+                    'is_active':   forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+                    'order':       forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+                }
+        form = CategoryForm(request.POST, request.FILES)
+        if form.is_valid():
+            cat = form.save()
+            messages.success(request, f'Catégorie "{cat.name}" créée.')
+            return redirect('dashboard:category_list')
+        return render(request, self.template_name, {
+            'form': form, 'action': 'Créer'
+        })
+
+
+class AdminCategoryEditView(AdminRequiredMixin, View):
+    """GET/POST /kadmin/categories/<pk>/modifier/"""
+    template_name = 'dashboard/categories/form.html'
+
+    def get(self, request, pk):
+        from apps.catalogue.models import Category
+        from django import forms
+        cat = get_object_or_404(Category, pk=pk)
+        class CategoryForm(forms.ModelForm):
+            class Meta:
+                model  = Category
+                fields = ['name', 'slug', 'type', 'description', 'icon', 'cover_image', 'is_active', 'order']
+                widgets = {
+                    'name':        forms.TextInput(attrs={'class': 'form-control'}),
+                    'slug':        forms.TextInput(attrs={'class': 'form-control'}),
+                    'type':        forms.Select(attrs={'class': 'form-select'}),
+                    'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+                    'icon':        forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'bi-image'}),
+                    'cover_image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+                    'is_active':   forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+                    'order':       forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+                }
+        return render(request, self.template_name, {
+            'form': CategoryForm(instance=cat), 'category': cat, 'action': 'Modifier'
+        })
+
+    def post(self, request, pk):
+        from apps.catalogue.models import Category
+        from django import forms
+        cat = get_object_or_404(Category, pk=pk)
+        class CategoryForm(forms.ModelForm):
+            class Meta:
+                model  = Category
+                fields = ['name', 'slug', 'type', 'description', 'icon', 'cover_image', 'is_active', 'order']
+                widgets = {
+                    'name':        forms.TextInput(attrs={'class': 'form-control'}),
+                    'slug':        forms.TextInput(attrs={'class': 'form-control'}),
+                    'type':        forms.Select(attrs={'class': 'form-select'}),
+                    'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+                    'icon':        forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'bi-image'}),
+                    'cover_image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+                    'is_active':   forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+                    'order':       forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+                }
+        form = CategoryForm(request.POST, request.FILES, instance=cat)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Catégorie "{cat.name}" mise à jour.')
+            return redirect('dashboard:category_list')
+        return render(request, self.template_name, {
+            'form': form, 'category': cat, 'action': 'Modifier'
+        })
+
+
+class AdminToggleCategoryView(AdminRequiredMixin, View):
+    """POST AJAX /kadmin/categories/<pk>/toggle/"""
+
+    def post(self, request, pk):
+        from apps.catalogue.models import Category
+        cat = get_object_or_404(Category, pk=pk)
+        cat.is_active = not cat.is_active
+        cat.save(update_fields=['is_active'])
+        return JsonResponse({
+            'success':   True,
+            'is_active': cat.is_active,
+            'label':     'Actif' if cat.is_active else 'Inactif',
+        })
+
+
+# ── Paiements ─────────────────────────────────────────────────────────────────
+
+class AdminPaymentListView(AdminRequiredMixin, ListView):
+    """GET /kadmin/paiements/ — Historique des paiements."""
+    template_name       = 'dashboard/payments/list.html'
+    paginate_by         = 25
+    context_object_name = 'payments'
+
+    def get_queryset(self):
+        from apps.payments.models import PaymentAttempt
+        qs = PaymentAttempt.objects.select_related('order', 'user').order_by('-initiated_at')
+        status = self.request.GET.get('status')
+        if status:
+            qs = qs.filter(status=status)
+        search = self.request.GET.get('q')
+        if search:
+            qs = qs.filter(
+                Q(flw_tx_ref__icontains=search)
+                | Q(user__email__icontains=search)
+                | Q(order__reference__icontains=search)
+            )
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        from apps.payments.models import PaymentAttempt
+        ctx['status_choices'] = PaymentAttempt.AttemptStatus.choices
+        ctx['status_filter']  = self.request.GET.get('status', '')
+        ctx['search_query']   = self.request.GET.get('q', '')
+        return ctx
+
+
+class AdminPaymentDetailView(AdminRequiredMixin, View):
+    """GET /kadmin/paiements/<pk>/ — Détail paiement."""
+    template_name = 'dashboard/payments/detail.html'
+
+    def get(self, request, pk):
+        from apps.payments.models import PaymentAttempt
+        payment = get_object_or_404(
+            PaymentAttempt.objects.select_related('order', 'user'),
+            pk=pk
+        )
+        return render(request, self.template_name, {'payment': payment})
+
+
 # ── Modération avis (placeholder Sprint 8) ───────────────────────────────────
 
 class AdminReviewModerationView(AdminRequiredMixin, ListView):

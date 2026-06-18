@@ -26,6 +26,20 @@ class LoginView(DjangoLoginView):
     def get_success_url(self):
         return AuthService.get_user_dashboard_url(self.request.user)
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        # Migrer les événements comportementaux de la session vers le profil utilisateur
+        self._migrate_session_events()
+        return response
+
+    def _migrate_session_events(self):
+        """Transfère les vues produits de la session anonymous vers BehaviorEvent."""
+        try:
+            from apps.recommendations.services import RecommendationService
+            RecommendationService.migrate_anonymous_events(self.request, self.request.user)
+        except Exception:
+            pass  # Ne jamais bloquer la connexion pour une erreur de tracking
+
 class LogoutView(DjangoLogoutView):
     """Vue pour la déconnexion (POST uniquement)."""
     http_method_names = ['post'] # Protection CSRF forcee par Django 5+

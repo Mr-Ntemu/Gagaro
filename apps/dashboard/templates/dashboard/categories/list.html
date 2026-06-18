@@ -1,0 +1,80 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Catégories — Gagaro Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="h4 mb-0 fw-bold">Catégories</h2>
+    <a href="{% url 'dashboard:category_create' %}" class="btn btn-primary rounded-pill px-4 fw-bold">
+        <i class="bi bi-plus-lg me-2"></i> Nouvelle catégorie
+    </a>
+</div>
+
+<div class="row g-4">
+    {% for cat in categories %}
+    <div class="col-md-6 col-xl-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100 p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    {% if cat.cover_image %}
+                    <img src="{{ cat.cover_image.url }}" alt="{{ cat.name }}" class="rounded-3" style="width: 48px; height: 48px; object-fit: cover;">
+                    {% else %}
+                    <div class="bg-primary bg-opacity-10 rounded-3 d-flex align-items-center justify-content-center text-primary" style="width: 48px; height: 48px; font-size: 1.2rem;">
+                        <i class="bi {{ cat.icon|default:'bi-image' }}"></i>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <h5 class="fw-bold mb-0">{{ cat.name }}</h5>
+                        <span class="badge bg-light text-dark border small">{{ cat.get_type_display }}</span>
+                    </div>
+                </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input cat-toggle" type="checkbox" data-id="{{ cat.id }}" {% if cat.is_active %}checked{% endif %}>
+                    <label class="small text-muted ms-1 toggle-label">{% if cat.is_active %}Actif{% else %}Inactif{% endif %}</label>
+                </div>
+            </div>
+
+            {% if cat.description %}
+            <p class="small text-muted mb-3">{{ cat.description|truncatewords:15 }}</p>
+            {% endif %}
+
+            <div class="bg-light rounded-3 p-3 mb-3">
+                <div class="row g-2 extra-small">
+                    <div class="col-6 text-muted">Produits :</div>
+                    <div class="col-6 text-end fw-bold">{{ cat.products.count }}</div>
+                    <div class="col-6 text-muted">Ordre :</div>
+                    <div class="col-6 text-end fw-bold">{{ cat.order }}</div>
+                </div>
+            </div>
+
+            <div class="mt-auto">
+                <a href="{% url 'dashboard:category_edit' cat.id %}" class="btn btn-outline-primary btn-sm w-100 rounded-pill">
+                    <i class="bi bi-pencil me-1"></i> Modifier
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5 text-muted">Aucune catégorie créée</div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.querySelectorAll('.cat-toggle').forEach(toggle => {
+        toggle.addEventListener('change', function() {
+            const id = this.dataset.id;
+            const label = this.parentElement.querySelector('.toggle-label');
+            fetch(`/kadmin/categories/${id}/toggle/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if(data.success) label.innerText = data.label;
+            });
+        });
+    });
+</script>
+{% endblock %}

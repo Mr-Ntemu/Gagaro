@@ -176,6 +176,50 @@ class RecommendationService:
         except Exception as e:
             logger.warning(f"[Reco] Rebuild profil échoué pour {user.email} : {e}")
 
+    @staticmethod
+    def migrate_anonymous_events(request, user) -> None:
+        """
+        Transfère les événements comportementaux accumulés en session
+        (utilisateur anonyme) vers les BehaviorEvent de l'utilisateur connecté.
+        Appelé lors de la connexion pour construire le profil dès le départ.
+        """
+        from apps.catalogue.models import Product
+
+        viewed_ids = request.session.get('viewed_products', [])
+        if not viewed_ids:
+            return
+
+        events_created = 0
+        for product_id in viewed_ids[-20:]:  # Limiter aux 20 derniers
+            try:
+                product = Product.objects.get(pk=product_id, status='active')
+                _, created = BehaviorEvent.objects.get_or_create(
+                    user       = user,
+                    product    = product,
+                    event_type = 'view',
+                    defaults   = {
+                        'category_id':   product.category_id,
+                        'tags_snapshot': product.tags or '',
+                    }
+                )
+                if created:
+                    events_created += 1
+            except Product.DoesNotExist:
+                pass
+
+        # Nettoyer la session
+        if 'viewed_products' in request.session:
+            del request.session['viewed_products']
+            request.session.modified = True
+
+        if events_created > 0:
+            logger.info(
+                f"[Reco] {events_created} événements anonymes migrés "
+                f"pour {user.email}"
+            )
+            # Déclencher un rebuild du profil
+            RecommendationService._schedule_profile_rebuild(user)
+
 
 class AnonymousRecommendationService:
     """
