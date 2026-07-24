@@ -7,8 +7,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Security
 SECRET_KEY = config('SECRET_KEY')
-DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='').split(',')
+DEBUG = False
+ALLOWED_HOSTS = ['gagaro.pythonanywhere.com']
 
 # Application definition
 INSTALLED_APPS = [
@@ -114,13 +114,11 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Flutterwave
-FLW_PUBLIC_KEY  = config('FLW_PUBLIC_KEY', default='FLWPUBK_TEST-xxxx')
-FLW_SECRET_KEY  = config('FLW_SECRET_KEY', default='FLWSECK_TEST-xxxx')
-FLW_SECRET_HASH = config('FLW_SECRET_HASH', default='kadoya_webhook_secret_2024')
-FLW_BASE_URL    = config('FLW_BASE_URL', default='https://api.flutterwave.com/v3')
-FLW_SANDBOX     = config('FLW_SANDBOX', cast=bool, default=True)
-SITE_URL        = config('SITE_URL', default='http://localhost:8000')
+# SharePay
+SHAREPAY_API_KEY        = config('SHAREPAY_API_KEY')
+SHAREPAY_WEBHOOK_SECRET = config('SHAREPAY_WEBHOOK_SECRET')
+SHAREPAY_BASE_URL       = config('SHAREPAY_BASE_URL', default='https://sharepay-api.te-sea.com')
+SITE_URL                = config('SITE_URL', default='http://localhost:8000')
 
 # Logging
 LOGGING = {
@@ -157,3 +155,5 @@ LOGGING = {
         },
     },
 }
+
+

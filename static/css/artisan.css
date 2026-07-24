@@ -5,19 +5,6 @@
   min-height: calc(100vh - 60px);
 }
 
-@media (max-width: 992px) {
-  .artisan-layout { grid-template-columns: 1fr; }
-  .artisan-sidebar {
-      position: fixed;
-      left: -260px;
-      z-index: 1050;
-      transition: all 0.3s ease;
-  }
-  .artisan-sidebar.active {
-      left: 0;
-  }
-}
-
 /* === SIDEBAR === */
 .artisan-sidebar {
   background: var(--kadoya-primary, #1a2a44);
@@ -50,8 +37,8 @@
 }
 
 .sidebar-identity {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 }
 
 .sidebar-shop-name {
@@ -98,21 +85,43 @@
   border-left: 3px solid var(--kadoya-secondary, #d4af37);
 }
 
-.sidebar-toggle {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: var(--kadoya-primary, #1a2a44);
-    color: white;
-    border: none;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    z-index: 1060;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+/* === OVERLAY === */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1040;
+  backdrop-filter: blur(2px);
+}
+
+.sidebar-overlay.active {
+  display: block;
+}
+
+/* === BOUTON TOGGLE caché sur desktop === */
+.sidebar-toggle-btn {
+  display: none;
+  width: 42px;
+  height: 42px;
+  background: var(--kadoya-primary, #1a2a44);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.3rem;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Topbar mobile cachée sur desktop */
+.artisan-topbar-mobile {
+  background: white;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  margin-bottom: 1rem;
 }
 
 /* === KPI CARDS === */
@@ -120,10 +129,6 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1.25rem;
-}
-
-@media (max-width: 768px) {
-  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 .kpi-card {
@@ -189,4 +194,72 @@
   padding: 2rem;
   background: #f8f9fa;
   min-height: calc(100vh - 60px);
+}
+
+/* ============================================
+   RESPONSIVE — TOUJOURS EN DERNIER dans le CSS
+   ============================================ */
+
+@media (max-width: 992px) {
+
+  .artisan-layout {
+    grid-template-columns: 1fr;
+  }
+
+  /* Topbar mobile pleine largeur */
+  .artisan-topbar-mobile {
+    margin: -1rem -1rem 1rem -1rem; /* annule le padding de artisan-main */
+    border-radius: 0;               /* pas de bordures arrondies */
+    width: calc(100% + 2rem);       /* pleine largeur */
+  }
+
+  /* Sidebar cachée — top calculé pour tenir compte de la navbar globale */
+  .artisan-sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: -280px !important;
+    width: 75vw !important;         /* 75% de la largeur écran */
+    max-width: 300px !important;
+    height: 100vh !important;       /* toute la hauteur */
+    z-index: 1055;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    box-shadow: none;
+  }
+
+  .artisan-sidebar.active {
+    left: 0 !important;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.35);
+  }
+
+  /* Overlay couvre tout l'écran */
+  .sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .sidebar-toggle-btn {
+    display: flex;
+  }
+
+  .artisan-main {
+    padding: 1rem;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .artisan-main {
+    padding: 0.75rem;
+  }
 }

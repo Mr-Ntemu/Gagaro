@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import PaymentAttempt
-from .services import FlutterwaveService, PaymentService
+from .services import SharePayService, PaymentService
 from .exceptions import PaymentVerificationError
 
 @admin.register(PaymentAttempt)
@@ -21,8 +21,8 @@ class PaymentAttemptAdmin(admin.ModelAdmin):
     def reverify_transaction(self, request, queryset):
         for attempt in queryset.filter(status='pending', flw_transaction_id__gt=''):
             try:
-                verified = FlutterwaveService.verify_transaction(attempt.flw_transaction_id)
-                if verified.get('status') == 'successful':
+                verified = SharePayService.check_status(attempt.flw_tx_ref)
+                if verified.get('status') == 'SUCCESS':
                     fake_payload = {'data': {
                         'tx_ref': attempt.flw_tx_ref,
                         'id': attempt.flw_transaction_id,

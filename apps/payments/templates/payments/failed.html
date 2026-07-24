@@ -9,7 +9,7 @@
 
 {% block content %}
 <div class="container py-5 text-center">
-    <div class="max-w-lg mx-auto" style="max-width: 500px;">
+    <div class="mx-auto" style="max-width: 500px;">
         <div class="mb-4 text-danger">
             <i class="bi bi-x-circle" style="font-size: 5rem;"></i>
         </div>
@@ -18,24 +18,43 @@
         <p class="text-muted mb-4">
             Nous n'avons pas pu confirmer votre paiement. Cela peut être dû à :
         </p>
-        
-        <ul class="text-start mb-5 d-inline-block">
+
+        <ul class="text-start mb-4 d-inline-block">
             <li>Un solde insuffisant sur votre compte.</li>
             <li>Un code PIN incorrect.</li>
             <li>La notification a été ignorée ou le délai a expiré.</li>
+            <li>Une interruption de connexion.</li>
         </ul>
 
+        <!-- Référence commande -->
+        <div class="card border-0 bg-light p-3 mb-4 text-start">
+            <div class="d-flex justify-content-between">
+                <span class="text-muted small">Référence commande :</span>
+                <span class="fw-bold small">{{ order.reference }}</span>
+            </div>
+            <div class="d-flex justify-content-between mt-1">
+                <span class="text-muted small">Montant :</span>
+                <span class="fw-bold small">{{ order.total_amount|floatformat:0 }} FCFA</span>
+            </div>
+        </div>
+
         <div class="d-grid gap-3">
-            <a href="{% url 'payments:initiate' reference=order.reference %}" class="btn btn-primary btn-lg py-3 fw-bold">
+            <a href="{% url 'payments:initiate' reference=order.reference %}"
+               class="btn btn-secondary btn-lg py-3 fw-bold text-white">
                 RÉESSAYER LE PAIEMENT
             </a>
-            <a href="#" class="btn btn-outline-secondary py-3">
-                Contacter le support
+            <a href="{% url 'orders:cart' %}"
+               class="btn btn-outline-secondary py-3">
+                Retour au panier
             </a>
         </div>
-        
+
         <p class="mt-4 text-muted small">
             Votre commande est conservée pendant 24h.
+            Besoin d'aide ?
+            <a href="mailto:support@gagaro.cm" class="text-muted">
+                Contactez le support
+            </a>
         </p>
     </div>
 </div>

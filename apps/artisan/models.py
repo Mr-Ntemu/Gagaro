@@ -6,7 +6,7 @@ from django.utils import timezone
 
 class ArtisanProfile(TimeStampedModel):
     """
-    Profil étendu d'un artisan Kadoya.
+    Profil étendu d'un artisan Gagaro.
     Créé automatiquement à l'inscription si role=artisan (signal post_save).
     Contient les informations métier : atelier, spécialités, Mobile Money.
     """

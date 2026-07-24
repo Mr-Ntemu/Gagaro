@@ -2,10 +2,14 @@
 {% load static %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/artisan.css' %}">
+<link rel="stylesheet" href="{% static 'css/artisan.css' %}?v=3">
 {% endblock %}
 
 {% block content %}
+
+<!-- Overlay mobile -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
 <div class="artisan-layout">
 
   <!-- Sidebar navigation -->
@@ -15,9 +19,20 @@
 
   <!-- Contenu principal -->
   <main class="artisan-main">
+
+    <!-- Topbar mobile — visible uniquement sur mobile -->
+    <div class="artisan-topbar-mobile d-flex d-lg-none align-items-center">
+      <button class="sidebar-toggle-btn me-3" id="sidebar-toggle" aria-label="Menu">
+        <i class="bi bi-list"></i>
+      </button>
+      <span class="fw-bold" style="color: var(--kadoya-primary, #1a2a44); font-size: 1rem;">
+        {{ artisan_profile.shop_name|default:request.user.first_name }}
+      </span>
+    </div>
+
     {% include 'partials/_messages.html' %}
-    <!-- Contenu de la page courante -->
     {% block artisan_content %}{% endblock %}
+
   </main>
 
 </div>
@@ -28,13 +43,44 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Sidebar toggle for mobile
-    const sidebarToggle = document.getElementById('sidebar-toggle');
-    const sidebar = document.getElementById('artisan-sidebar');
-    if (sidebarToggle && sidebar) {
-        sidebarToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
-        });
+  (function () {
+    const toggleBtn = document.getElementById('sidebar-toggle');
+    const sidebar   = document.getElementById('artisan-sidebar');
+    const overlay   = document.getElementById('sidebar-overlay');
+
+    function openSidebar() {
+      if (!sidebar || !overlay) return;
+      sidebar.classList.add('active');
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
     }
+
+    function closeSidebar() {
+      if (!sidebar || !overlay) return;
+      sidebar.classList.remove('active');
+      overlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', function () {
+        sidebar.classList.contains('active') ? closeSidebar() : openSidebar();
+      });
+    }
+
+    if (overlay) {
+      overlay.addEventListener('click', closeSidebar);
+    }
+
+    document.querySelectorAll('.sidebar-link').forEach(function (link) {
+      link.addEventListener('click', function () {
+        if (window.innerWidth < 992) closeSidebar();
+      });
+    });
+
+    window.addEventListener('resize', function () {
+      if (window.innerWidth >= 992) closeSidebar();
+    });
+  })();
 </script>
 {% endblock %}

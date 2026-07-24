@@ -1,5 +1,6 @@
 import json
 import logging
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views import View
 from django.views.generic import DetailView
@@ -10,12 +11,14 @@ from django.urls import reverse
 from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+
 from apps.orders.models import Order
 from .models import PaymentAttempt
-from .services import FlutterwaveService, PaymentService
-from .exceptions import FlutterwaveAPIError, DuplicatePaymentError, PaymentVerificationError
+from .services import SharePayService, PaymentService
+from .exceptions import SharePayAPIError, DuplicatePaymentError, PaymentVerificationError
 
 logger = logging.getLogger('apps.payments')
+
 
 class InitiatePaymentView(LoginRequiredMixin, View):
     template_name = 'payments/initiate.html'
@@ -25,13 +28,20 @@ class InitiatePaymentView(LoginRequiredMixin, View):
             Order, reference=reference, user=request.user, status='pending'
         )
         return render(request, self.template_name, {
-            'order':        order,
-            'flw_pub_key':  settings.FLW_PUBLIC_KEY,
+            'order': order,
             'payment_methods': [
-                {'id': 'mtn',    'label': 'MTN Mobile Money',
-                 'logo': 'https://upload.wikimedia.org/wikipedia/commons/a/af/MTN_Logo.svg', 'prefix': '237 67X / 65X'},
-                {'id': 'orange', 'label': 'Orange Money',
-                 'logo': 'https://upload.wikimedia.org/wikipedia/commons/c/c8/Orange_logo.svg', 'prefix': '237 69X'},
+                {
+                    'id':     'MTN_MOMO_CM',
+                    'label':  'MTN Mobile Money',
+                    'logo':   'https://upload.wikimedia.org/wikipedia/commons/a/af/MTN_Logo.svg',
+                    'prefix': '237 67X / 65X'
+                },
+                {
+                    'id':     'ORANGE_MONEY_CM',
+                    'label':  'Orange Money',
+                    'logo':   'https://upload.wikimedia.org/wikipedia/commons/c/c8/Orange_logo.svg',
+                    'prefix': '237 69X'
+                },
             ]
         })
 
@@ -39,34 +49,39 @@ class InitiatePaymentView(LoginRequiredMixin, View):
         order = get_object_or_404(
             Order, reference=reference, user=request.user, status='pending'
         )
-        phone_number    = request.POST.get('phone_number', '').strip()
-        payment_method  = request.POST.get('payment_method', 'mtn')
-
-        if not phone_number:
-            messages.error(request, "Veuillez saisir votre numéro Mobile Money.")
-            return redirect('payments:initiate', reference=reference)
+        payment_mode   = request.POST.get('payment_mode', 'checkout')
+        phone_number   = request.POST.get('phone_number', '').strip()
+        payment_method = request.POST.get('payment_method', 'MTN_MOMO_CM')
 
         try:
-            attempt = PaymentService.initiate_payment(
-                order          = order,
-                phone_number   = phone_number,
-                payment_method = payment_method,
-                user           = request.user,
-            )
-            return redirect('payments:pending', reference=order.reference)
+            if payment_mode == 'checkout':
+                attempt, payment_url = PaymentService.initiate_checkout(
+                    order, request.user
+                )
+                return redirect(payment_url)
+            else:
+                if not phone_number:
+                    messages.error(
+                        request, "Veuillez saisir votre numéro Mobile Money."
+                    )
+                    return redirect('payments:initiate', reference=reference)
+                PaymentService.initiate_charge(
+                    order=order,
+                    phone_number=phone_number,
+                    payment_method=payment_method,
+                    user=request.user,
+                )
+                return redirect('payments:pending', reference=order.reference)
 
         except DuplicatePaymentError as e:
             messages.warning(request, str(e))
             return redirect('orders:confirmation', reference=reference)
-
-        except FlutterwaveAPIError as e:
-            logger.error(f"Erreur API Flutterwave: {e}")
-            messages.error(
-                request,
-                "Impossible d'initier le paiement pour l'instant. Réessayez dans quelques minutes."
-            )
+        except SharePayAPIError as e:
+            logger.error(f"Erreur API SharePay : {e}")
+            messages.error(request, "Impossible d'initier le paiement. Réessayez.")
             return render(request, self.template_name, {
-                'order': order, 'error': str(e)
+                'order': order,
+                'error': str(e)
             })
 
 
@@ -77,7 +92,7 @@ class PaymentPendingView(LoginRequiredMixin, View):
         order = get_object_or_404(Order, reference=reference, user=request.user)
         return render(request, self.template_name, {
             'order':       order,
-            'poll_url':    reverse('payments:status', kwargs={'reference': reference}),
+            'poll_url':    reverse('payments:status',  kwargs={'reference': reference}),
             'success_url': reverse('payments:success', kwargs={'reference': reference}),
             'failed_url':  reverse('payments:failed',  kwargs={'reference': reference}),
         })
@@ -90,17 +105,18 @@ class PaymentStatusView(LoginRequiredMixin, View):
         return JsonResponse(status)
 
 
-class FlutterwaveWebhookView(View):
+class SharePayWebhookView(View):
     @method_decorator(csrf_exempt)
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
 
     def post(self, request):
-        received_hash = request.headers.get('verif-hash', '')
-        if not FlutterwaveService.verify_webhook_signature(
-            request.body, received_hash
-        ):
-            logger.warning(f"Webhook Flutterwave rejeté — signature invalide. IP: {request.META.get('REMOTE_ADDR')}")
+        received_sig = request.headers.get('X-Sharepay-Signature', '')
+        if not SharePayService.verify_webhook_signature(request.body, received_sig):
+            logger.warning(
+                f"Webhook SharePay rejeté — signature invalide. "
+                f"IP: {request.META.get('REMOTE_ADDR')}"
+            )
             return HttpResponse(status=401)
 
         try:
@@ -108,29 +124,26 @@ class FlutterwaveWebhookView(View):
         except json.JSONDecodeError:
             return HttpResponse(status=400)
 
-        logger.info(
-            f"Webhook Flutterwave reçu : type={payload.get('event')}, "
-            f"tx_ref={payload.get('data', {}).get('tx_ref')}, status={payload.get('data', {}).get('status')}"
-        )
+        event = payload.get('event', '')
+        logger.info(f"Webhook SharePay reçu : event={event}")
 
         try:
-            event_type = payload.get('event', '')
-            status     = payload.get('data', {}).get('status', '')
-
-            if event_type == 'charge.completed' and status == 'successful':
+            if event == 'payment.success':
                 PaymentService.handle_successful_webhook(payload)
-            elif status in ['failed', 'cancelled']:
+            elif event in ['payment.failed', 'payment.cancelled']:
                 PaymentService.handle_failed_webhook(payload)
+            elif event == 'webhook.test':
+                logger.info("Webhook test SharePay reçu — OK")
 
         except PaymentVerificationError as e:
-            logger.error(f"Erreur de vérification paiement : {e}")
+            logger.error(f"Erreur vérification paiement : {e}")
         except Exception as e:
             logger.exception(f"Erreur inattendue dans le webhook : {e}")
 
         return HttpResponse(status=200)
 
 
-class PaymentCallbackView(LoginRequiredMixin, View):
+class PaymentCallbackView(View):
     def get(self, request):
         status = request.GET.get('status', '')
         tx_ref = request.GET.get('tx_ref', '')
@@ -139,7 +152,7 @@ class PaymentCallbackView(LoginRequiredMixin, View):
             return redirect('orders:cart')
 
         try:
-            order = Order.objects.get(reference=tx_ref, user=request.user)
+            order = Order.objects.get(reference=tx_ref)
         except Order.DoesNotExist:
             return redirect('core:home')
 
@@ -161,7 +174,7 @@ class PaymentSuccessView(LoginRequiredMixin, DetailView):
         return get_object_or_404(
             self.get_queryset(),
             reference=self.kwargs['reference'],
-            status='paid'
+            status__in=['paid', 'pending']  # ← corrigé aussi
         )
 
 

@@ -3,7 +3,7 @@ import dj_database_url
 
 DEBUG = False
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
+ALLOWED_HOSTS = ['gagaro.pythonanywhere.com']
 
 DATABASES = {
     'default': dj_database_url.config(

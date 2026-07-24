@@ -347,12 +347,82 @@
   background: rgba(200,150,62,.5);
 }
 
-/* === RESPONSIVE === */
+/* === RESPONSIVE ADMIN === */
+
+/* Overlay */
+.admin-sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1040;
+  backdrop-filter: blur(2px);
+}
+
+.admin-sidebar-overlay.active {
+  display: block;
+}
+
+/* Bouton toggle — caché sur desktop */
+.admin-sidebar-toggle {
+  display: none;
+  width: 38px;
+  height: 38px;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  margin-right: 0.75rem;
+}
+
 @media (max-width: 992px) {
+
+  /* Layout une colonne */
   .admin-layout {
     grid-template-columns: 1fr;
+    grid-template-rows: 60px 1fr;
   }
+
+  /* Topbar span sur toute la largeur */
+  .admin-topbar {
+    grid-column: 1 / -1;
+  }
+
+  /* Sidebar cachée à gauche */
   .admin-sidebar {
-    display: none;
+    position: fixed;
+    top: 0;
+    left: -260px;
+    width: 240px;
+    height: 100vh;
+    z-index: 1050;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+  }
+
+  /* Sidebar ouverte */
+  .admin-sidebar.active {
+    left: 0;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.3);
+  }
+
+  /* Bouton toggle visible */
+  .admin-sidebar-toggle {
+    display: flex;
+  }
+
+  .admin-main {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-main {
+    padding: 0.75rem;
   }
 }

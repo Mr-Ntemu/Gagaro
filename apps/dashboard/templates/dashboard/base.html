@@ -5,235 +5,316 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Gagaro Admin{% endblock %}</title>
-    
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
-    
-    <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    
-    <!-- Custom Admin CSS -->
     <link rel="stylesheet" href="{% static 'css/admin-dashboard.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
 
-    <div class="admin-layout">
-        <!-- Topbar -->
-        <header class="admin-topbar">
-            <a href="{% url 'core:home' %}" class="text-decoration-none d-flex align-items-center gap-2">
-                <span class="text-white fw-bold brand">GAGARO</span>
-                <span class="badge bg-secondary" style="font-size: 0.55rem; background: var(--admin-secondary) !important; color: var(--admin-primary) !important;">ADMIN</span>
-            </a>
-            
-            <div class="ms-auto d-flex align-items-center gap-4">
-                <!-- Notifications -->
-                <div class="notif-bell" id="notif-dropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-bell"></i>
-                    {% if kpis.notifs_unread > 0 %}
-                    <span class="badge" id="notif-badge">{{ kpis.notifs_unread }}</span>
-                    {% endif %}
-                </div>
-                <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-0" aria-labelledby="notif-dropdown" style="width: 300px; max-height: 400px; overflow-y: auto;">
-                    <li class="p-3 border-bottom d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0">Notifications</h6>
-                        <button class="btn btn-link btn-sm p-0 text-decoration-none" id="mark-all-read">Tout marquer comme lu</button>
-                    </li>
-                    <div id="notif-list">
-                        {% for notif in notifs %}
-                        <li class="p-3 border-bottom position-relative {% if not notif.is_read %}bg-light{% endif %}">
-                            <div class="d-flex gap-2">
-                                <span class="text-primary">{{ notif.get_type_display|slice:":2" }}</span>
-                                <div>
-                                    <p class="mb-0 fw-bold small">{{ notif.title }}</p>
-                                    <p class="mb-0 text-muted extra-small" style="font-size: 0.75rem;">{{ notif.created_at|timesince }}</p>
-                                </div>
+<!-- Overlay mobile -->
+<div class="admin-sidebar-overlay" id="admin-overlay"></div>
+
+<div class="admin-layout">
+
+    <!-- Topbar -->
+    <header class="admin-topbar">
+
+        <!-- Bouton toggle mobile -->
+        <button class="admin-sidebar-toggle" id="admin-sidebar-toggle">
+            <i class="bi bi-list"></i>
+        </button>
+
+        <a href="{% url 'core:home' %}" class="text-decoration-none d-flex align-items-center gap-2">
+            <span class="text-white fw-bold brand">GAGARO</span>
+            <span class="badge bg-secondary"
+                  style="font-size:0.55rem; background:var(--admin-secondary)!important; color:var(--admin-primary)!important;">
+                ADMIN
+            </span>
+        </a>
+
+        <div class="ms-auto d-flex align-items-center gap-4">
+            <!-- Notifications -->
+            <div class="notif-bell" id="notif-dropdown"
+                 data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-bell"></i>
+                {% if kpis.notifs_unread > 0 %}
+                <span class="badge" id="notif-badge">{{ kpis.notifs_unread }}</span>
+                {% endif %}
+            </div>
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-0"
+                aria-labelledby="notif-dropdown"
+                style="width:300px; max-height:400px; overflow-y:auto;">
+                <li class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Notifications</h6>
+                    <button class="btn btn-link btn-sm p-0 text-decoration-none"
+                            id="mark-all-read">Tout marquer comme lu</button>
+                </li>
+                <div id="notif-list">
+                    {% for notif in notifs %}
+                    <li class="p-3 border-bottom position-relative {% if not notif.is_read %}bg-light{% endif %}">
+                        <div class="d-flex gap-2">
+                            <span class="text-primary">{{ notif.get_type_display|slice:":2" }}</span>
+                            <div>
+                                <p class="mb-0 fw-bold small">{{ notif.title }}</p>
+                                <p class="mb-0 text-muted" style="font-size:0.75rem;">
+                                    {{ notif.created_at|timesince }}
+                                </p>
                             </div>
-                            <a href="{{ notif.action_url }}" class="stretched-link mark-read" data-id="{{ notif.id }}"></a>
-                        </li>
-                        {% empty %}
-                        <li class="p-4 text-center text-muted">Aucune notification</li>
-                        {% endfor %}
+                        </div>
+                        <a href="{{ notif.action_url }}"
+                           class="stretched-link mark-read"
+                           data-id="{{ notif.id }}"></a>
+                    </li>
+                    {% empty %}
+                    <li class="p-4 text-center text-muted">Aucune notification</li>
+                    {% endfor %}
+                </div>
+                <li class="p-2 text-center">
+                    <a href="{% url 'dashboard:notification_list' %}"
+                       class="small text-decoration-none">Voir toutes</a>
+                </li>
+            </ul>
+
+            <!-- Profile -->
+            <div class="dropdown">
+                <div class="d-flex align-items-center gap-2 cursor-pointer"
+                     data-bs-toggle="dropdown">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center text-white"
+                         style="width:34px; height:34px; background:var(--admin-secondary);
+                                color:var(--admin-primary)!important; font-weight:600; font-size:0.85rem;">
+                        {{ user.first_name|first|default:user.email|first|upper }}
                     </div>
-                    <li class="p-2 text-center">
-                        <a href="{% url 'dashboard:notification_list' %}" class="small text-decoration-none">Voir toutes</a>
+                    <span class="text-white small d-none d-md-inline">
+                        {{ user.full_name|default:user.email }}
+                    </span>
+                </div>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                    <li>
+                        <a class="dropdown-item" href="{% url 'core:home' %}">
+                            <i class="bi bi-house me-2"></i>Retour au site
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <form action="{% url 'accounts:logout' %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="dropdown-item text-danger">
+                                <i class="bi bi-box-arrow-right me-2"></i>Déconnexion
+                            </button>
+                        </form>
                     </li>
                 </ul>
-
-                <!-- Profile -->
-                <div class="dropdown">
-                    <div class="d-flex align-items-center gap-2 cursor-pointer" data-bs-toggle="dropdown">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center text-white" style="width: 34px; height: 34px; background: var(--admin-secondary); color: var(--admin-primary) !important; font-weight: 600; font-size: 0.85rem;">
-                            {{ user.first_name|first|default:user.email|first|upper }}
-                        </div>
-                        <span class="text-white small d-none d-md-inline">{{ user.full_name|default:user.email }}</span>
-                    </div>
-                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                        <li><a class="dropdown-item" href="{% url 'core:home' %}"><i class="bi bi-house me-2"></i>Retour au site</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <form action="{% url 'accounts:logout' %}" method="post">
-                                {% csrf_token %}
-                                <button type="submit" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right me-2"></i>Déconnexion</button>
-                            </form>
-                        </li>
-                    </ul>
-                </div>
             </div>
-        </header>
+        </div>
+    </header>
 
-        <!-- Sidebar -->
-        <aside class="admin-sidebar">
-            <div class="admin-nav-group">
-                <a href="{% url 'dashboard:overview' %}" class="admin-nav-link {% if request.resolver_match.url_name == 'overview' %}active{% endif %}">
-                    <i class="bi bi-speedometer2"></i> Vue d'ensemble
-                </a>
+    <!-- Sidebar -->
+    <aside class="admin-sidebar" id="admin-sidebar">
+        <div class="admin-nav-group">
+            <a href="{% url 'dashboard:overview' %}"
+               class="admin-nav-link {% if request.resolver_match.url_name == 'overview' %}active{% endif %}">
+                <i class="bi bi-speedometer2"></i> Vue d'ensemble
+            </a>
+        </div>
+
+        <div class="admin-nav-group">
+            <p class="text-uppercase text-muted px-4 mt-3 mb-2"
+               style="font-size:0.65rem; letter-spacing:1px;">Commandes</p>
+            <a href="{% url 'dashboard:order_list' %}"
+               class="admin-nav-link {% if 'order_list' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-cart3"></i> Toutes les commandes
+            </a>
+            <a href="{% url 'dashboard:custom_orders' %}"
+               class="admin-nav-link {% if 'custom_orders' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-palette"></i> Perso à valider
+                {% if kpis.orders_to_validate > 0 %}
+                <span class="badge bg-danger ms-auto">{{ kpis.orders_to_validate }}</span>
+                {% endif %}
+            </a>
+        </div>
+
+        <div class="admin-nav-group">
+            <p class="text-uppercase text-muted px-4 mt-3 mb-2"
+               style="font-size:0.65rem; letter-spacing:1px;">Produits</p>
+            <a href="{% url 'dashboard:product_list' %}"
+               class="admin-nav-link {% if 'product_list' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-box-seam"></i> Catalogue complet
+            </a>
+            <a href="{% url 'dashboard:products_pending' %}"
+               class="admin-nav-link {% if 'products_pending' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-clock-history"></i> En attente validation
+                {% if kpis.products_pending > 0 %}
+                <span class="badge bg-warning text-dark ms-auto">{{ kpis.products_pending }}</span>
+                {% endif %}
+            </a>
+            <a href="{% url 'dashboard:category_list' %}"
+               class="admin-nav-link {% if 'category' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-tags"></i> Catégories
+            </a>
+        </div>
+
+        <div class="admin-nav-group">
+            <p class="text-uppercase text-muted px-4 mt-3 mb-2"
+               style="font-size:0.65rem; letter-spacing:1px;">Utilisateurs</p>
+            <a href="{% url 'dashboard:user_list' %}"
+               class="admin-nav-link {% if 'user_' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-people"></i> Tous les utilisateurs
+            </a>
+        </div>
+
+        <div class="admin-nav-group">
+            <p class="text-uppercase text-muted px-4 mt-3 mb-2"
+               style="font-size:0.65rem; letter-spacing:1px;">Marketing</p>
+            <a href="{% url 'dashboard:promo_list' %}"
+               class="admin-nav-link {% if 'promo' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-gift"></i> Promotions
+            </a>
+        </div>
+
+        <div class="admin-nav-group">
+            <p class="text-uppercase text-muted px-4 mt-3 mb-2"
+               style="font-size:0.65rem; letter-spacing:1px;">Artisans</p>
+            <a href="{% url 'dashboard:artisan_list' %}"
+               class="admin-nav-link {% if 'artisan_list' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-shop"></i> Liste artisans
+            </a>
+            <a href="{% url 'dashboard:withdrawals' %}"
+               class="admin-nav-link {% if 'withdrawals' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-cash-stack"></i> Demandes retrait
+                {% if kpis.withdrawal_pending > 0 %}
+                <span class="badge bg-primary ms-auto">{{ kpis.withdrawal_pending }}</span>
+                {% endif %}
+            </a>
+        </div>
+
+        <div class="admin-nav-group">
+            <p class="text-uppercase text-muted px-4 mt-3 mb-2"
+               style="font-size:0.65rem; letter-spacing:1px;">Finance</p>
+            <a href="{% url 'dashboard:payment_list' %}"
+               class="admin-nav-link {% if 'payment' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-credit-card"></i> Paiements
+            </a>
+        </div>
+
+        <div class="admin-nav-group">
+            <p class="text-uppercase text-muted px-4 mt-3 mb-2"
+               style="font-size:0.65rem; letter-spacing:1px;">Modération</p>
+            <a href="{% url 'dashboard:review_moderation' %}"
+               class="admin-nav-link {% if 'review_moderation' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-star"></i> Modération avis
+            </a>
+        </div>
+
+        <div class="admin-nav-group">
+            <a href="{% url 'dashboard:notification_list' %}"
+               class="admin-nav-link {% if 'notification_list' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-bell"></i> Notifications
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show border-0 shadow-sm mb-4"
+                 role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
+            {% endfor %}
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
 
-            <div class="admin-nav-group">
-                <p class="text-uppercase extra-small text-muted px-4 mt-3 mb-2" style="font-size: 0.65rem; letter-spacing: 1px;">Commandes</p>
-                <a href="{% url 'dashboard:order_list' %}" class="admin-nav-link {% if 'order_list' in request.resolver_match.url_name %}active{% endif %}">
-                    <i class="bi bi-cart3"></i> Toutes les commandes
-                </a>
-                <a href="{% url 'dashboard:custom_orders' %}" class="admin-nav-link {% if 'custom_orders' in request.resolver_match.url_name %}active{% endif %}">
-                    <i class="bi bi-palette"></i> Perso à valider
-                    {% if kpis.orders_to_validate > 0 %}
-                    <span class="badge bg-danger ms-auto">{{ kpis.orders_to_validate }}</span>
-                    {% endif %}
-                </a>
-            </div>
+</div>
 
-            <div class="admin-nav-group">
-                <p class="text-uppercase extra-small text-muted px-4 mt-3 mb-2" style="font-size: 0.65rem; letter-spacing: 1px;">Produits</p>
-                <a href="{% url 'dashboard:product_list' %}" class="admin-nav-link {% if 'product_list' in request.resolver_match.url_name %}active{% endif %}">
-                    <i class="bi bi-box-seam"></i> Catalogue complet
-                </a>
-                <a href="{% url 'dashboard:products_pending' %}" class="admin-nav-link {% if 'products_pending' in request.resolver_match.url_name %}active{% endif %}">
-                    <i class="bi bi-clock-history"></i> En attente validation
-                    {% if kpis.products_pending > 0 %}
-                    <span class="badge bg-warning text-dark ms-auto">{{ kpis.products_pending }}</span>
-                    {% endif %}
-                </a>
-                <a href="{% url 'dashboard:category_list' %}" class="admin-nav-link {% if 'category' in request.resolver_match.url_name %}active{% endif %}">
-                    <i class="bi bi-tags"></i> Catégories
-                </a>
-            </div>
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
 
-            <div class="admin-nav-group">
-                <p class="text-uppercase extra-small text-muted px-4 mt-3 mb-2" style="font-size: 0.65rem; letter-spacing: 1px;">Utilisateurs</p>
-                <a href="{% url 'dashboard:user_list' %}" class="admin-nav-link {% if 'user_' in request.resolver_match.url_name %}active{% endif %}">
-                    <i class="bi bi-people"></i> Tous les utilisateurs
-                </a>
-            </div>
+    // ── Sidebar toggle mobile ──────────────────────────────
+    const toggleBtn = document.getElementById('admin-sidebar-toggle');
+    const sidebar   = document.getElementById('admin-sidebar');
+    const overlay   = document.getElementById('admin-overlay');
 
-            <div class="admin-nav-group">
-                <p class="text-uppercase extra-small text-muted px-4 mt-3 mb-2" style="font-size: 0.65rem; letter-spacing: 1px;">Marketing</p>
-                <a href="{% url 'dashboard:promo_list' %}" class="admin-nav-link {% if 'promo' in request.resolver_match.url_name %}active{% endif %}">
-                    <i class="bi bi-gift"></i> Promotions
-                </a>
-            </div>
+    function openSidebar() {
+        sidebar.classList.add('active');
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
 
-            <div class="admin-nav-group">
-                <p class="text-uppercase extra-small text-muted px-4 mt-3 mb-2" style="font-size: 0.65rem; letter-spacing: 1px;">Artisans</p>
-                <a href="{% url 'dashboard:artisan_list' %}" class="admin-nav-link {% if 'artisan_list' in request.resolver_match.url_name %}active{% endif %}">
-                    <i class="bi bi-shop"></i> Liste artisans
-                </a>
-                <a href="{% url 'dashboard:withdrawals' %}" class="admin-nav-link {% if 'withdrawals' in request.resolver_match.url_name %}active{% endif %}">
-                    <i class="bi bi-cash-stack"></i> Demandes retrait
-                    {% if kpis.withdrawal_pending > 0 %}
-                    <span class="badge bg-primary ms-auto">{{ kpis.withdrawal_pending }}</span>
-                    {% endif %}
-                </a>
-            </div>
+    function closeSidebar() {
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
 
-            <div class="admin-nav-group">
-                <p class="text-uppercase extra-small text-muted px-4 mt-3 mb-2" style="font-size: 0.65rem; letter-spacing: 1px;">Finance</p>
-                <a href="{% url 'dashboard:payment_list' %}" class="admin-nav-link {% if 'payment' in request.resolver_match.url_name %}active{% endif %}">
-                    <i class="bi bi-credit-card"></i> Paiements
-                </a>
-            </div>
-
-            <div class="admin-nav-group">
-                <p class="text-uppercase extra-small text-muted px-4 mt-3 mb-2" style="font-size: 0.65rem; letter-spacing: 1px;">Modération</p>
-                <a href="{% url 'dashboard:review_moderation' %}" class="admin-nav-link {% if 'review_moderation' in request.resolver_match.url_name %}active{% endif %}">
-                    <i class="bi bi-star"></i> Modération avis
-                </a>
-            </div>
-
-            <div class="admin-nav-group">
-                <a href="{% url 'dashboard:notification_list' %}" class="admin-nav-link {% if 'notification_list' in request.resolver_match.url_name %}active{% endif %}">
-                    <i class="bi bi-bell"></i> Notifications
-                </a>
-            </div>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="admin-main">
-            {% if messages %}
-                {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-                {% endfor %}
-            {% endif %}
-
-            {% block content %}{% endblock %}
-        </main>
-    </div>
-
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        // AJAX Notification Handling
-        document.addEventListener('DOMContentLoaded', function() {
-            // Mark as read
-            document.querySelectorAll('.mark-read').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    const id = this.dataset.id;
-                    fetch(`/kadmin/notifications/${id}/lue/`, {
-                        method: 'POST',
-                        headers: { 'X-CSRFToken': '{{ csrf_token }}' }
-                    })
-                    .then(r => r.json())
-                    .then(data => {
-                        if(data.success) {
-                            const badge = document.getElementById('notif-badge');
-                            if(data.remaining_unread > 0) {
-                                if(badge) badge.innerText = data.remaining_unread;
-                            } else {
-                                if(badge) badge.remove();
-                            }
-                        }
-                    });
-                });
-            });
-
-            // Mark all as read
-            const markAllBtn = document.getElementById('mark-all-read');
-            if(markAllBtn) {
-                markAllBtn.addEventListener('click', function() {
-                    fetch('/kadmin/notifications/tout-lire/', {
-                        method: 'POST',
-                        headers: { 'X-CSRFToken': '{{ csrf_token }}' }
-                    })
-                    .then(r => r.json())
-                    .then(data => {
-                        if(data.success) {
-                            const badge = document.getElementById('notif-badge');
-                            if(badge) badge.remove();
-                            document.querySelectorAll('#notif-list li').forEach(li => li.classList.remove('bg-light'));
-                        }
-                    });
-                });
-            }
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.contains('active') ? closeSidebar() : openSidebar();
         });
-    </script>
-    {% block extra_js %}{% endblock %}
+    }
+
+    if (overlay) {
+        overlay.addEventListener('click', closeSidebar);
+    }
+
+    // Fermer au clic d'un lien sur mobile
+    document.querySelectorAll('.admin-nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            if (window.innerWidth < 992) closeSidebar();
+        });
+    });
+
+    // ── Notifications ──────────────────────────────────────
+    document.querySelectorAll('.mark-read').forEach(link => {
+        link.addEventListener('click', function (e) {
+            const id = this.dataset.id;
+            fetch(`/kadmin/notifications/${id}/lue/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    const badge = document.getElementById('notif-badge');
+                    if (data.remaining_unread > 0) {
+                        if (badge) badge.innerText = data.remaining_unread;
+                    } else {
+                        if (badge) badge.remove();
+                    }
+                }
+            });
+        });
+    });
+
+    const markAllBtn = document.getElementById('mark-all-read');
+    if (markAllBtn) {
+        markAllBtn.addEventListener('click', function () {
+            fetch('/kadmin/notifications/tout-lire/', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    const badge = document.getElementById('notif-badge');
+                    if (badge) badge.remove();
+                    document.querySelectorAll('#notif-list li')
+                            .forEach(li => li.classList.remove('bg-light'));
+                }
+            });
+        });
+    }
+});
+</script>
+{% block extra_js %}{% endblock %}
 </body>
 </html>
