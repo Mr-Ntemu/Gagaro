@@ -115,7 +115,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Monetbil (Mobile Money)
-MONETBIL_API_URL        = config('MONET_BILL_API_URL', default='https://api.monetbil.africa/payment/v1/')
+MONETBIL_API_URL        = config('MONET_BILL_API_URL', default='https://api.monetbil.com/payment/v1/')
 MONETBIL_SERVICE_KEY    = config('MONET_BILL_SERVICE_KEY')
 MONETBIL_SERVICE_SECRET = config('MONET_BILL_SERVICE_SECRET', default='')
 SITE_URL                = config('SITE_URL', default='http://localhost:8000')

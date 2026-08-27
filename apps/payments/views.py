@@ -1,5 +1,6 @@
 import json
 import logging
+from urllib.parse import urlparse
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views import View
@@ -61,13 +62,17 @@ class InitiatePaymentView(LoginRequiredMixin, View):
         )
 
         try:
-            PaymentService.initiate_payment(
+            attempt = PaymentService.initiate_payment(
                 order=order,
                 phone_number=phone_number,
                 payment_method=payment_method,
                 user=request.user,
                 notify_url=notify_url,
             )
+            payment_url = (attempt.mb_init_response or {}).get('payment_url')
+            parsed_url = urlparse(payment_url or '')
+            if parsed_url.scheme == 'https' and parsed_url.hostname == 'www.monetbil.com':
+                return redirect(payment_url)
             return redirect('payments:pending', reference=order.reference)
 
         except DuplicatePaymentError as e:

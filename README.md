@@ -50,7 +50,7 @@ DATABASE_URL=sqlite:///db.sqlite3
 MEDIA_URL=/media/
 
 # Monetbil (Mobile Money)
-MONET_BILL_API_URL=https://api.monetbil.africa/payment/v1/
+MONET_BILL_API_URL=https://api.monetbil.com/payment/v1/
 MONET_BILL_PAYOUT_API_URL=https://api.monetbil.com/v1/payouts/
 MONET_BILL_SERVICE_KEY=ta_service_key
 MONET_BILL_SERVICE_SECRET=ton_service_secret
