@@ -40,7 +40,7 @@
 <!-- Table Produits -->
 <div class="card shadow-sm border-0">
     <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+        <table class="table table-hover align-middle mb-0 table-card-mobile">
             <thead class="table-light">
                 <tr>
                     <th class="ps-4">Produit</th>
@@ -54,7 +54,7 @@
             <tbody>
                 {% for product in products %}
                 <tr>
-                    <td class="ps-4">
+                    <td class="ps-4" data-label="Produit">
                         <div class="d-flex align-items-center gap-3">
                             {% with product.images.all|first as img %}
                             <img src="{{ img.image.url }}" class="product-row-img" alt="">
@@ -65,8 +65,8 @@
                             </div>
                         </div>
                     </td>
-                    <td>{{ product.category.name }}</td>
-                    <td>
+                    <td data-label="Catégorie">{{ product.category.name }}</td>
+                    <td data-label="Prix">
                         {% if product.discounted_price %}
                         <div class="text-decoration-line-through small text-muted">{{ product.base_price|floatformat:0 }} FCFA</div>
                         <div class="fw-bold text-danger">{{ product.discounted_price|floatformat:0 }} FCFA</div>
@@ -74,27 +74,27 @@
                         <div class="fw-bold">{{ product.base_price|floatformat:0 }} FCFA</div>
                         {% endif %}
                     </td>
-                    <td>
+                    <td data-label="Stock">
                         {% if product.stock_quantity > 0 %}
                         <span class="badge bg-light text-dark border">{{ product.stock_quantity }} en stock</span>
                         {% else %}
                         <span class="badge bg-danger">Rupture</span>
                         {% endif %}
                     </td>
-                    <td>
+                    <td data-label="Statut">
                         <span class="status-badge {{ product.status }}" id="status-label-{{ product.slug }}">
                             {{ product.get_status_display }}
                         </span>
                     </td>
-                    <td class="text-end pe-4">
+                    <td class="text-end pe-4" data-label="">
                         <div class="btn-group">
-                            <button class="btn btn-sm btn-outline-secondary toggle-status" data-slug="{{ product.slug }}">
+                            <button class="btn btn-sm btn-outline-secondary toggle-status" data-slug="{{ product.slug }}" title="Activer/Désactiver">
                                 <i class="bi bi-power"></i>
                             </button>
-                            <a href="{% url 'artisan:product_edit' product.slug %}" class="btn btn-sm btn-outline-dark">
+                            <a href="{% url 'artisan:product_edit' product.slug %}" class="btn btn-sm btn-outline-dark" title="Modifier">
                                 <i class="bi bi-pencil"></i>
                             </a>
-                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ product.pk }}">
+                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ product.pk }}" title="Archiver">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>

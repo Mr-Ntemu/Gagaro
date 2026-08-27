@@ -1,6 +1,6 @@
 {% extends 'dashboard/base.html' %}
 
-{% block title %}Paiement {{ payment.flw_tx_ref }} — Gagaro Admin{% endblock %}
+{% block title %}Paiement {{ payment.mb_payment_id }} — Gagaro Admin{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -10,7 +10,7 @@
         </a>
         <h2 class="h4 mb-0 fw-bold mt-1">Détail du Paiement</h2>
     </div>
-    <span class="badge bg-{% if payment.status == 'success' %}success{% elif payment.status == 'failed' %}danger{% elif payment.status == 'pending' %}warning text-dark{% else %}secondary{% endif %} fs-6">
+    <span class="badge bg-{% if payment.status == 'success' %}success{% elif payment.status == 'failed' %}danger{% elif payment.status == 'pending' or payment.status == 'processing' %}warning text-dark{% else %}secondary{% endif %} fs-6">
         {{ payment.get_status_display }}
     </span>
 </div>
@@ -22,18 +22,16 @@
             <h6 class="fw-bold mb-3"><i class="bi bi-credit-card me-2"></i>Informations de paiement</h6>
             <div class="bg-light rounded-3 p-3">
                 <div class="row g-2 small">
-                    <div class="col-5 text-muted">Tx Ref :</div>
-                    <div class="col-7 fw-bold"><code>{{ payment.flw_tx_ref }}</code></div>
-                    <div class="col-5 text-muted">Transaction ID :</div>
-                    <div class="col-7 fw-bold"><code>{{ payment.flw_transaction_id|default:"—" }}</code></div>
-                    <div class="col-5 text-muted">Flutterwave Ref :</div>
-                    <div class="col-7 fw-bold"><code>{{ payment.flw_ref|default:"—" }}</code></div>
+                    <div class="col-5 text-muted">Payment ID :</div>
+                    <div class="col-7 fw-bold"><code>{{ payment.mb_payment_id }}</code></div>
+                    <div class="col-5 text-muted">Transaction UUID :</div>
+                    <div class="col-7 fw-bold"><code>{{ payment.mb_transaction_id|default:"—" }}</code></div>
                     <div class="col-5 text-muted">Montant :</div>
                     <div class="col-7 fw-bold">{{ payment.amount|floatformat:0 }} {{ payment.currency }}</div>
                     <div class="col-5 text-muted">Méthode :</div>
                     <div class="col-7 fw-bold">{{ payment.get_payment_method_display }}</div>
                     <div class="col-5 text-muted">Téléphone :</div>
-                    <div class="col-7 fw-bold">{{ payment.phone_number }}</div>
+                    <div class="col-7 fw-bold">{{ payment.phone_number|default:"—" }}</div>
                     <div class="col-5 text-muted">Initié le :</div>
                     <div class="col-7 fw-bold">{{ payment.initiated_at|date:"d/m/Y à H:i:s" }}</div>
                     {% if payment.confirmed_at %}
@@ -68,29 +66,29 @@
     </div>
 
     <!-- Données JSON -->
-    {% if payment.flw_init_response %}
+    {% if payment.mb_init_response %}
     <div class="col-12">
         <div class="card border-0 shadow-sm rounded-4 p-4">
-            <h6 class="fw-bold mb-3"><i class="bi bi-code-slash me-2"></i>Réponse d'initiation Flutterwave</h6>
-            <pre class="bg-dark text-success p-3 rounded-3 small mb-0" style="max-height: 300px; overflow-y: auto;">{{ payment.flw_init_response|pprint }}</pre>
+            <h6 class="fw-bold mb-3"><i class="bi bi-code-slash me-2"></i>Réponse d'initiation Monetbil</h6>
+            <pre class="bg-dark text-success p-3 rounded-3 small mb-0" style="max-height: 300px; overflow-y: auto;">{{ payment.mb_init_response|pprint }}</pre>
         </div>
     </div>
     {% endif %}
 
-    {% if payment.flw_webhook_payload %}
+    {% if payment.mb_webhook_payload %}
     <div class="col-12">
         <div class="card border-0 shadow-sm rounded-4 p-4">
-            <h6 class="fw-bold mb-3"><i class="bi bi-globe me-2"></i>Payload Webhook</h6>
-            <pre class="bg-dark text-warning p-3 rounded-3 small mb-0" style="max-height: 300px; overflow-y: auto;">{{ payment.flw_webhook_payload|pprint }}</pre>
+            <h6 class="fw-bold mb-3"><i class="bi bi-globe me-2"></i>Payload Notification</h6>
+            <pre class="bg-dark text-warning p-3 rounded-3 small mb-0" style="max-height: 300px; overflow-y: auto;">{{ payment.mb_webhook_payload|pprint }}</pre>
         </div>
     </div>
     {% endif %}
 
-    {% if payment.flw_verify_response %}
+    {% if payment.mb_verify_response %}
     <div class="col-12">
         <div class="card border-0 shadow-sm rounded-4 p-4">
             <h6 class="fw-bold mb-3"><i class="bi bi-check-circle me-2"></i>Réponse de vérification</h6>
-            <pre class="bg-dark text-info p-3 rounded-3 small mb-0" style="max-height: 300px; overflow-y: auto;">{{ payment.flw_verify_response|pprint }}</pre>
+            <pre class="bg-dark text-info p-3 rounded-3 small mb-0" style="max-height: 300px; overflow-y: auto;">{{ payment.mb_verify_response|pprint }}</pre>
         </div>
     </div>
     {% endif %}

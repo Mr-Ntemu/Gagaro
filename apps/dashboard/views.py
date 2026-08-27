@@ -622,7 +622,7 @@ class AdminPaymentListView(AdminRequiredMixin, ListView):
         search = self.request.GET.get('q')
         if search:
             qs = qs.filter(
-                Q(flw_tx_ref__icontains=search)
+                Q(mb_payment_id__icontains=search)
                 | Q(user__email__icontains=search)
                 | Q(order__reference__icontains=search)
             )

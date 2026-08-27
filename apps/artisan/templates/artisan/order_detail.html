@@ -15,7 +15,7 @@
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table align-middle mb-0">
+                    <table class="table align-middle mb-0 table-card-mobile">
                         <thead class="table-light">
                             <tr>
                                 <th class="ps-4">Produit</th>
@@ -27,7 +27,7 @@
                         <tbody>
                             {% for item in my_items %}
                             <tr>
-                                <td class="ps-4">
+                                <td class="ps-4" data-label="Produit">
                                     <div class="d-flex align-items-center gap-3">
                                         {% with item.product.images.all|first as img %}
                                         <img src="{{ img.image.url }}" class="product-row-img" style="width:50px; height:50px;" alt="">
@@ -35,15 +35,15 @@
                                         <span>{{ item.product.title }}</span>
                                     </div>
                                 </td>
-                                <td>
+                                <td data-label="Options">
                                     {% if item.frame_option %}
                                     <span class="small text-muted">Cadre: {{ item.frame_option.label }} (+{{ item.frame_option.extra_price|floatformat:0 }} FCFA)</span>
                                     {% else %}
                                     <span class="small text-muted">—</span>
                                     {% endif %}
                                 </td>
-                                <td>x{{ item.quantity }}</td>
-                                <td class="pe-4 text-end fw-bold">{{ item.line_total|floatformat:0|intcomma }} FCFA</td>
+                                <td data-label="Qté">x{{ item.quantity }}</td>
+                                <td class="pe-4 text-end fw-bold" data-label="Total">{{ item.line_total|floatformat:0|intcomma }} FCFA</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -51,7 +51,6 @@
                             <tr>
                                 <td colspan="3" class="ps-4 fw-bold">Sous-total atelier</td>
                                 <td class="pe-4 text-end fw-bold h5 mb-0">
-                                    {% load mathfilters %}
                                     {{ order.total_amount|floatformat:0|intcomma }} FCFA
                                     {# TODO: Calculate real subtotal for this artisan if multiple artisans in one order #}
                                 </td>

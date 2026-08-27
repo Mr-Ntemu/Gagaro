@@ -72,7 +72,7 @@
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0 align-middle">
+                    <table class="table table-hover mb-0 align-middle table-card-mobile">
                         <thead class="table-light">
                             <tr>
                                 <th>Produit</th>
@@ -84,10 +84,10 @@
                         <tbody>
                             {% for sale in recent_sales %}
                             <tr>
-                                <td>{{ sale.product.title|truncatechars:20 }}</td>
-                                <td>{{ sale.order.user.first_name }}</td>
-                                <td>{{ sale.line_total|floatformat:0|intcomma }}</td>
-                                <td>
+                                <td data-label="Produit">{{ sale.product.title|truncatechars:20 }}</td>
+                                <td data-label="Client">{{ sale.order.user.first_name }}</td>
+                                <td data-label="Total">{{ sale.line_total|floatformat:0|intcomma }}</td>
+                                <td data-label="Statut">
                                     <span class="badge bg-{{ sale.order.status }}">{{ sale.order.get_status_display }}</span>
                                 </td>
                             </tr>
@@ -110,7 +110,7 @@
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0 align-middle">
+                    <table class="table table-hover mb-0 align-middle table-card-mobile">
                         <thead class="table-light">
                             <tr>
                                 <th>Image</th>
@@ -122,14 +122,14 @@
                         <tbody>
                             {% for product in recent_products %}
                             <tr>
-                                <td>
+                                <td data-label="Image">
                                     {% with product.images.all|first as img %}
                                     <img src="{{ img.image.url }}" class="product-row-img" alt="">
                                     {% endwith %}
                                 </td>
-                                <td>{{ product.title|truncatechars:20 }}</td>
-                                <td>{{ product.base_price|floatformat:0|intcomma }}</td>
-                                <td>
+                                <td data-label="Titre">{{ product.title|truncatechars:20 }}</td>
+                                <td data-label="Prix">{{ product.base_price|floatformat:0|intcomma }}</td>
+                                <td data-label="Statut">
                                     <span class="status-badge {{ product.status }}">{{ product.get_status_display }}</span>
                                 </td>
                             </tr>

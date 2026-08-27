@@ -40,7 +40,7 @@
                 <h5 class="mb-0">Derniers retraits</h5>
             </div>
             <div class="table-responsive">
-                <table class="table align-middle mb-0">
+                <table class="table align-middle mb-0 table-card-mobile">
                     <thead class="table-light">
                         <tr>
                             <th class="ps-4">Date</th>
@@ -52,10 +52,10 @@
                     <tbody>
                         {% for w in withdrawals %}
                         <tr>
-                            <td class="ps-4">{{ w.created_at|date:"d/m/Y H:i" }}</td>
-                            <td class="fw-bold">{{ w.amount|floatformat:0|intcomma }} FCFA</td>
-                            <td>{{ w.get_operator_display }}</td>
-                            <td>
+                            <td class="ps-4" data-label="Date">{{ w.created_at|date:"d/m/Y H:i" }}</td>
+                            <td data-label="Montant" class="fw-bold">{{ w.amount|floatformat:0|intcomma }} FCFA</td>
+                            <td data-label="Opérateur">{{ w.get_operator_display }}</td>
+                            <td data-label="Statut">
                                 <span class="badge bg-{% if w.status == 'processed' %}success{% elif w.status == 'rejected' %}danger{% else %}warning{% endif %}">
                                     {{ w.get_status_display }}
                                 </span>

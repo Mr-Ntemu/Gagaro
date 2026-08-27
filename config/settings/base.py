@@ -114,10 +114,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# SharePay
-SHAREPAY_API_KEY        = config('SHAREPAY_API_KEY')
-SHAREPAY_WEBHOOK_SECRET = config('SHAREPAY_WEBHOOK_SECRET')
-SHAREPAY_BASE_URL       = config('SHAREPAY_BASE_URL', default='https://sharepay-api.te-sea.com')
+# Monetbil (Mobile Money)
+MONETBIL_API_URL        = config('MONET_BILL_API_URL', default='https://api.monetbil.africa/payment/v1/')
+MONETBIL_SERVICE_KEY    = config('MONET_BILL_SERVICE_KEY')
+MONETBIL_SERVICE_SECRET = config('MONET_BILL_SERVICE_SECRET', default='')
 SITE_URL                = config('SITE_URL', default='http://localhost:8000')
 
 # Logging

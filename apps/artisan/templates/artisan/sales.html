@@ -39,24 +39,24 @@
 <!-- Table Ventes -->
 <div class="card shadow-sm border-0">
     <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+        <table class="table table-hover align-middle mb-0 table-card-mobile">
             <thead class="table-light">
                 <tr>
                     <th class="ps-4">Référence</th>
                     <th>Produit</th>
                     <th>Client</th>
-                    <th>Quantité</th>
+                    <th>Qté</th>
                     <th>Net Artisan</th>
                     <th>Date</th>
                     <th>Statut</th>
-                    <th class="text-end pe-4">Actions</th>
+                    <th class="text-end pe-4">Action</th>
                 </tr>
             </thead>
             <tbody>
                 {% for item in sales %}
                 <tr>
-                    <td class="ps-4 fw-bold">#{{ item.order.reference }}</td>
-                    <td>
+                    <td class="ps-4 fw-bold" data-label="Réf.">#{{ item.order.reference }}</td>
+                    <td data-label="Produit">
                         <div class="d-flex align-items-center gap-2">
                             {% with item.product.images.all|first as img %}
                             <img src="{{ img.image.url }}" class="product-row-img" style="width:30px; height:30px;" alt="">
@@ -64,14 +64,14 @@
                             <span>{{ item.product.title|truncatechars:25 }}</span>
                         </div>
                     </td>
-                    <td>{{ item.order.user.full_name }}</td>
-                    <td>x{{ item.quantity }}</td>
-                    <td class="fw-bold">{{ item.artisan_payout|floatformat:0|intcomma }} FCFA</td>
-                    <td>{{ item.order.created_at|date:"d/m/Y H:i" }}</td>
-                    <td>
+                    <td data-label="Client">{{ item.order.user.full_name }}</td>
+                    <td data-label="Qté">x{{ item.quantity }}</td>
+                    <td data-label="Montant" class="fw-bold">{{ item.artisan_payout|floatformat:0|intcomma }} FCFA</td>
+                    <td data-label="Date">{{ item.order.created_at|date:"d/m/Y H:i" }}</td>
+                    <td data-label="Statut">
                         <span class="badge bg-{{ item.order.status }}">{{ item.order.get_status_display }}</span>
                     </td>
-                    <td class="text-end pe-4">
+                    <td class="text-end pe-4" data-label="">
                         <a href="{% url 'artisan:order_detail' item.order.reference %}" class="btn btn-sm btn-outline-dark">
                             Détails
                         </a>

@@ -68,7 +68,7 @@
                 <h5 class="mb-4">Options de personnalisation (Cadres)</h5>
                 {{ frame_formset.management_form }}
                 <div class="table-responsive">
-                    <table class="table align-middle">
+                    <table class="table align-middle table-card-mobile">
                         <thead>
                             <tr>
                                 <th>Label</th>
@@ -82,17 +82,12 @@
                         <tbody>
                             {% for f_form in frame_formset %}
                             <tr class="frame-form-row">
-                                {% for field in f_form.visible_fields %}
-                                <td>
-                                    {{ field }}
-                                    {% if field.errors %}
-                                    <div class="text-danger small">{{ field.errors }}</div>
-                                    {% endif %}
-                                </td>
-                                {% endfor %}
-                                {% for hidden in f_form.hidden_fields %}
-                                    {{ hidden }}
-                                {% endfor %}
+                                <td data-label="Label">{{ f_form.label }}</td>
+                                <td data-label="Dim. (cm)">{{ f_form.dimensions }}</td>
+                                <td data-label="Matière">{{ f_form.material }}</td>
+                                <td data-label="Prix suppl.">{{ f_form.extra_price }}</td>
+                                <td data-label="Dispo">{{ f_form.is_available }}</td>
+                                <td data-label="Suppr.">{{ f_form.DELETE }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>

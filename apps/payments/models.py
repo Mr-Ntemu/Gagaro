@@ -9,6 +9,7 @@ class PaymentAttempt(TimeStampedModel):
     class AttemptStatus(models.TextChoices):
         INITIATED = 'initiated', _('Initié')
         PENDING   = 'pending',   _('En attente confirmation client')
+        PROCESSING = 'processing', _('En cours de traitement')
         SUCCESS   = 'success',   _('Succès')
         FAILED    = 'failed',    _('Échec')
         TIMEOUT   = 'timeout',   _('Expiré')
@@ -23,43 +24,42 @@ class PaymentAttempt(TimeStampedModel):
                         'accounts.KadoyaUser',
                         on_delete=models.CASCADE
                       )
-    flw_tx_ref      = models.CharField(
+    mb_payment_id   = models.CharField(
                         max_length=100, unique=True, db_index=True,
-                        help_text=_("tx_ref envoyé à Flutterwave = order.reference")
+                        help_text=_("paymentId retourné par Monetbil")
                       )
-    flw_transaction_id = models.CharField(
+    mb_transaction_id = models.CharField(
                            max_length=100, blank=True, db_index=True,
-                           help_text=_("ID transaction Flutterwave (reçu dans le webhook)")
+                           help_text=_("transaction_UUID Monetbil")
                          )
-    flw_ref         = models.CharField(
-                        max_length=200, blank=True,
-                        help_text=_("Référence interne Flutterwave")
-                      )
     amount          = models.DecimalField(max_digits=10, decimal_places=2)
     currency        = models.CharField(max_length=5, default='XAF')
     payment_method  = models.CharField(
                         max_length=20,
-                        choices=[('mtn', 'MTN Mobile Money'), ('orange', 'Orange Money')],
-                        default='mtn'
+                        choices=[
+                            ('MTN_MOMO_CM', 'MTN Mobile Money'),
+                            ('ORANGE_MONEY_CM', 'Orange Money'),
+                        ],
+                        default='MTN_MOMO_CM'
                       )
-    phone_number    = models.CharField(max_length=20)
+    phone_number    = models.CharField(max_length=20, blank=True)
     status          = models.CharField(
                         max_length=20,
                         choices=AttemptStatus.choices,
                         default=AttemptStatus.INITIATED
                       )
-    flw_init_response  = models.JSONField(
+    mb_init_response  = models.JSONField(
                            null=True, blank=True,
-                           help_text=_("Réponse JSON de l'appel d'initiation")
+                           help_text=_("Réponse JSON de l'appel placePayment")
                          )
-    flw_webhook_payload = models.JSONField(
-                            null=True, blank=True,
-                            help_text=_("Payload brut du webhook reçu")
-                          )
-    flw_verify_response = models.JSONField(
-                            null=True, blank=True,
-                            help_text=_("Réponse de l'appel de vérification")
-                          )
+    mb_webhook_payload = models.JSONField(
+                             null=True, blank=True,
+                             help_text=_("Payload brut de la notification reçue")
+                           )
+    mb_verify_response = models.JSONField(
+                             null=True, blank=True,
+                             help_text=_("Réponse de l'appel checkPayment")
+                           )
     initiated_at    = models.DateTimeField(auto_now_add=True)
     confirmed_at    = models.DateTimeField(
                         null=True, blank=True,
@@ -71,12 +71,12 @@ class PaymentAttempt(TimeStampedModel):
         verbose_name_plural = _('Tentatives de paiement')
         ordering            = ['-initiated_at']
         indexes             = [
-            models.Index(fields=['flw_tx_ref']),
+            models.Index(fields=['mb_payment_id']),
             models.Index(fields=['status', 'initiated_at']),
         ]
 
     def __str__(self) -> str:
-        return f"Paiement {self.flw_tx_ref} — {self.get_status_display()}"
+        return f"Paiement {self.mb_payment_id} — {self.get_status_display()}"
 
     @property
     def is_successful(self) -> bool:

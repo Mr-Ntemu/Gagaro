@@ -34,6 +34,7 @@
   object-fit: cover;
   border: 2px solid var(--kadoya-secondary, #d4af37);
   margin-right: 0.75rem;
+  flex-shrink: 0;
 }
 
 .sidebar-identity {
@@ -99,7 +100,7 @@
   display: block;
 }
 
-/* === BOUTON TOGGLE caché sur desktop === */
+/* === BOUTON TOGGLE === */
 .sidebar-toggle-btn {
   display: none;
   width: 42px;
@@ -115,7 +116,7 @@
   flex-shrink: 0;
 }
 
-/* Topbar mobile cachée sur desktop */
+/* Topbar mobile */
 .artisan-topbar-mobile {
   background: white;
   padding: 0.75rem 1rem;
@@ -174,6 +175,7 @@
   width: 45px; height: 45px;
   object-fit: cover;
   border-radius: 6px;
+  flex-shrink: 0;
 }
 
 .status-badge {
@@ -182,6 +184,7 @@
   font-size: .7rem;
   font-weight: 600;
   display: inline-block;
+  white-space: nowrap;
 }
 
 .status-badge.active   { background: #d4edda; color: #155724; }
@@ -196,8 +199,53 @@
   min-height: calc(100vh - 60px);
 }
 
+/* === RESPONSIVE TABLE CARDS (mobile) === */
+@media (max-width: 768px) {
+  table.table-card-mobile,
+  table.table-card-mobile thead,
+  table.table-card-mobile tbody,
+  table.table-card-mobile tr,
+  table.table-card-mobile th,
+  table.table-card-mobile td {
+    display: block;
+  }
+
+  table.table-card-mobile thead {
+    display: none;
+  }
+
+  table.table-card-mobile tbody tr {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border: none;
+  }
+
+  table.table-card-mobile td {
+    padding: 0.35rem 0;
+    border: none;
+    text-align: right;
+  }
+
+  table.table-card-mobile td:empty {
+    display: none;
+  }
+
+  table.table-card-mobile td::before {
+    content: attr(data-label);
+    float: left;
+    font-weight: 600;
+    font-size: .75rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+  }
+}
+
 /* ============================================
-   RESPONSIVE — TOUJOURS EN DERNIER dans le CSS
+   RESPONSIVE
    ============================================ */
 
 @media (max-width: 992px) {
@@ -206,21 +254,19 @@
     grid-template-columns: 1fr;
   }
 
-  /* Topbar mobile pleine largeur */
   .artisan-topbar-mobile {
-    margin: -1rem -1rem 1rem -1rem; /* annule le padding de artisan-main */
-    border-radius: 0;               /* pas de bordures arrondies */
-    width: calc(100% + 2rem);       /* pleine largeur */
+    border-radius: 0;
+    margin: calc(-1rem) calc(-1rem) 1rem calc(-1rem);
+    width: calc(100% + 2rem);
   }
 
-  /* Sidebar cachée — top calculé pour tenir compte de la navbar globale */
   .artisan-sidebar {
     position: fixed !important;
     top: 0 !important;
     left: -280px !important;
-    width: 75vw !important;         /* 75% de la largeur écran */
+    width: 75vw !important;
     max-width: 300px !important;
-    height: 100vh !important;       /* toute la hauteur */
+    height: 100vh !important;
     z-index: 1055;
     transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow-y: auto;
@@ -230,15 +276,6 @@
   .artisan-sidebar.active {
     left: 0 !important;
     box-shadow: 4px 0 24px rgba(0,0,0,0.35);
-  }
-
-  /* Overlay couvre tout l'écran */
-  .sidebar-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
   }
 
   .sidebar-toggle-btn {
@@ -251,15 +288,101 @@
 
   .kpi-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .kpi-card {
+    padding: 1.25rem;
+  }
+
+  .kpi-value {
+    font-size: 1.25rem;
+  }
+
+  /* header avec bouton "Nouveau produit" */
+  .d-flex.justify-content-between.align-items-center.mb-4 {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .d-flex.justify-content-between.align-items-center.mb-4 .btn-primary {
+    width: 100%;
+  }
+
+  /* formulaire filtres */
+  .card.shadow-sm.border-0.mb-4.p-3 form .row {
+    --bs-gutter-y: 0.5rem;
+  }
+
+  .card.shadow-sm.border-0.mb-4.p-3 form .btn {
+    width: 100%;
+  }
+
+  /* btn-group vertical */
+  .btn-group {
+    display: flex;
+    gap: 0.35rem;
+  }
+
+  .btn-group .btn {
+    flex: 1;
+    font-size: 0;
+    padding: 0.5rem;
+  }
+
+  .btn-group .btn i {
+    font-size: 1rem;
+  }
+
+  /* produit edit/create - image sticky */
+  .sticky-top {
+    position: static !important;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 576px) {
   .kpi-grid {
     grid-template-columns: 1fr;
+    gap: 0.75rem;
   }
 
   .artisan-main {
     padding: 0.75rem;
+  }
+
+  .artisan-topbar-mobile {
+    margin: calc(-0.75rem) calc(-0.75rem) 0.75rem calc(-0.75rem);
+    width: calc(100% + 1.5rem);
+  }
+
+  .kpi-card {
+    padding: 1rem;
+  }
+
+  .kpi-value {
+    font-size: 1.15rem;
+  }
+
+  .kpi-icon {
+    font-size: 1.5rem;
+  }
+
+  .image-upload-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .image-upload-slot {
+    margin-bottom: 0 !important;
+  }
+
+  /* découpage formulaire 2 colonnes → 1 colonne */
+  .artisan-main .row > .col-md-6 {
+    width: 100%;
+  }
+
+  .card.shadow-sm.border-0.p-4 {
+    padding: 1rem !important;
   }
 }

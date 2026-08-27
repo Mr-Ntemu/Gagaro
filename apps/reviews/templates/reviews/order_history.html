@@ -72,7 +72,7 @@
                                 </a>
                             {% endif %}
                             {% if order.status == 'pending' %}
-                                <a href="{% url 'payments:checkout' reference=order.reference %}" class="btn btn-sm btn-success">
+                                <a href="{% url 'payments:initiate' reference=order.reference %}" class="btn btn-sm btn-success">
                                     Payer
                                 </a>
                             {% endif %}

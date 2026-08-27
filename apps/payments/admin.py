@@ -1,38 +1,34 @@
 from django.contrib import admin
 from .models import PaymentAttempt
-from .services import SharePayService, PaymentService
+from .services import MonetbilService, PaymentService
 from .exceptions import PaymentVerificationError
 
 @admin.register(PaymentAttempt)
 class PaymentAttemptAdmin(admin.ModelAdmin):
-    list_display    = ['flw_tx_ref', 'order', 'user', 'amount',
+    list_display    = ['mb_payment_id', 'order', 'user', 'amount',
                         'payment_method', 'status', 'initiated_at', 'confirmed_at']
     list_filter     = ['status', 'payment_method', 'currency']
-    search_fields   = ['flw_tx_ref', 'flw_transaction_id', 'order__reference',
+    search_fields   = ['mb_payment_id', 'mb_transaction_id', 'order__reference',
                         'user__email', 'phone_number']
-    readonly_fields = ['flw_tx_ref', 'flw_transaction_id', 'flw_ref',
-                        'amount', 'currency', 'flw_init_response',
-                        'flw_webhook_payload', 'flw_verify_response',
+    readonly_fields = ['mb_payment_id', 'mb_transaction_id',
+                        'amount', 'currency', 'mb_init_response',
+                        'mb_webhook_payload', 'mb_verify_response',
                         'initiated_at', 'confirmed_at']
     ordering        = ['-initiated_at']
 
     actions = ['reverify_transaction']
 
     def reverify_transaction(self, request, queryset):
-        for attempt in queryset.filter(status='pending', flw_transaction_id__gt=''):
+        for attempt in queryset.filter(status__in=['pending', 'processing']):
             try:
-                verified = SharePayService.check_status(attempt.flw_tx_ref)
-                if verified.get('status') == 'SUCCESS':
-                    fake_payload = {'data': {
-                        'tx_ref': attempt.flw_tx_ref,
-                        'id': attempt.flw_transaction_id,
-                        'amount': float(attempt.amount),
-                        'currency': attempt.currency,
-                        'status': 'successful',
-                    }, 'event': 'charge.completed'}
-                    PaymentService.handle_successful_webhook(fake_payload)
-                    self.message_user(request, f"Transaction {attempt.flw_tx_ref} confirmée manuellement.")
+                verified = MonetbilService.check_payment(attempt.mb_payment_id)
+                transaction = verified.get('transaction')
+                if transaction and int(transaction.get('status', 0)) == 1:
+                    PaymentService.handle_successful_payment(
+                        attempt.mb_payment_id, verified
+                    )
+                    self.message_user(request, f"Transaction {attempt.mb_payment_id} confirmée manuellement.")
             except Exception as e:
-                self.message_user(request, f"Erreur pour {attempt.flw_tx_ref} : {e}", level='ERROR')
+                self.message_user(request, f"Erreur pour {attempt.mb_payment_id} : {e}", level='ERROR')
 
     reverify_transaction.short_description = "Re-vérifier les transactions sélectionnées"

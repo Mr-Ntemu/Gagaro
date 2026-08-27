@@ -5,25 +5,6 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/payment.css' %}">
-<style>
-    .mode-card {
-        border: 2px solid #e9ecef;
-        border-radius: 12px;
-        padding: 1.2rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-    .mode-card.selected {
-        border-color: #088A5C;
-        background-color: #f0faf5;
-    }
-    .mode-card .mode-icon {
-        font-size: 1.8rem;
-        margin-bottom: 0.5rem;
-    }
-    #section-charge { display: none; }
-    #section-checkout { display: block; }
-</style>
 {% endblock %}
 
 {% block content %}
@@ -48,90 +29,48 @@
         <form method="POST" id="payment-form">
             {% csrf_token %}
 
-            <!-- CHOIX DU MODE DE PAIEMENT -->
-            <p class="fw-bold mb-3">Comment souhaitez-vous payer ?</p>
+            <p class="fw-bold mb-3">Votre opérateur</p>
             <div class="row g-3 mb-4">
-
+                {% for method in payment_methods %}
                 <div class="col-6">
-                    <div class="mode-card selected text-center" id="card-checkout"
-                         onclick="selectMode('checkout')">
-                        <div class="mode-icon">🔗</div>
-                        <div class="fw-bold small">Page de paiement</div>
-                        <div class="text-muted" style="font-size:0.75rem;">
-                            Choisissez votre opérateur sur la page SharePay
-                        </div>
-                    </div>
+                    <label class="operator-card w-100 {% if forloop.first %}selected{% endif %}"
+                           data-method="{{ method.id }}">
+                        <input type="radio"
+                               name="payment_method"
+                               value="{{ method.id }}"
+                               class="d-none"
+                               {% if forloop.first %}checked{% endif %}>
+                        <img src="{{ method.logo }}"
+                             alt="{{ method.label }}"
+                             class="mb-2 d-block mx-auto"
+                             style="height:40px; object-fit:contain;">
+                        <div class="fw-bold small">{{ method.label }}</div>
+                        <div class="text-xs text-muted">{{ method.prefix }}</div>
+                    </label>
                 </div>
-
-                <div class="col-6">
-                    <div class="mode-card text-center" id="card-charge"
-                         onclick="selectMode('charge')">
-                        <div class="mode-icon">⚡</div>
-                        <div class="fw-bold small">Mobile Money direct</div>
-                        <div class="text-muted" style="font-size:0.75rem;">
-                            Entrez votre numéro, confirmez sur le téléphone
-                        </div>
-                    </div>
-                </div>
-
+                {% endfor %}
             </div>
 
-            <!-- Champ caché pour le mode -->
-            <input type="hidden" name="payment_mode" id="payment_mode" value="checkout">
-
-            <!-- SECTION CHECKOUT -->
-            <div id="section-checkout">
-                <div class="alert alert-info border-0 small mb-4">
-                    <i class="bi bi-info-circle me-2"></i>
-                    Vous serez redirigé vers la page sécurisée SharePay pour choisir
-                    MTN Mobile Money ou Orange Money et finaliser le paiement.
+            <div class="mb-4">
+                <label class="form-label fw-bold">Numéro de téléphone</label>
+                <div class="phone-input-wrapper">
+                    <span class="phone-prefix">+237</span>
+                    <input type="text"
+                           name="phone_number"
+                           id="phone_number"
+                           class="phone-input"
+                           placeholder="6XX XXX XXX"
+                           pattern="[0-9]{9}"
+                           required>
+                </div>
+                <div class="form-text small">
+                    Saisissez les 9 chiffres sans l'indicatif.
                 </div>
             </div>
 
-            <!-- SECTION CHARGE DIRECTE -->
-            <div id="section-charge">
-                <p class="fw-bold mb-3">Votre opérateur</p>
-                <div class="row g-3 mb-4">
-                    {% for method in payment_methods %}
-                    <div class="col-6">
-                        <label class="operator-card w-100 {% if forloop.first %}selected{% endif %}"
-                               data-method="{{ method.id }}">
-                            <input type="radio"
-                                   name="payment_method"
-                                   value="{{ method.id }}"
-                                   class="d-none"
-                                   {% if forloop.first %}checked{% endif %}>
-                            <img src="{{ method.logo }}"
-                                 alt="{{ method.label }}"
-                                 class="mb-2 d-block mx-auto"
-                                 style="height:40px; object-fit:contain;">
-                            <div class="fw-bold small">{{ method.label }}</div>
-                            <div class="text-xs text-muted">{{ method.prefix }}</div>
-                        </label>
-                    </div>
-                    {% endfor %}
-                </div>
-
-                <div class="mb-4">
-                    <label class="form-label fw-bold">Numéro de téléphone</label>
-                    <div class="phone-input-wrapper">
-                        <span class="phone-prefix">+237</span>
-                        <input type="text"
-                               name="phone_number"
-                               id="phone_number"
-                               class="phone-input"
-                               placeholder="6XX XXX XXX"
-                               pattern="[0-9]{9}">
-                    </div>
-                    <div class="form-text small">
-                        Saisissez les 9 chiffres sans l'indicatif.
-                    </div>
-                </div>
-
-                <div class="alert alert-info border-0 small mb-4">
-                    <i class="bi bi-info-circle me-2"></i>
-                    Vous recevrez une notification push sur votre téléphone pour valider.
-                </div>
+            <div class="alert alert-info border-0 small mb-4">
+                <i class="bi bi-info-circle me-2"></i>
+                Vous recevrez une notification push sur votre téléphone pour valider.
             </div>
 
             <!-- BOUTON PAYER -->
@@ -153,16 +92,6 @@
 
 {% block extra_js %}
 <script>
-    function selectMode(mode) {
-        document.getElementById('payment_mode').value = mode;
-        document.getElementById('card-checkout').classList.toggle('selected', mode === 'checkout');
-        document.getElementById('card-charge').classList.toggle('selected', mode === 'charge');
-        document.getElementById('section-checkout').style.display = mode === 'checkout' ? 'block' : 'none';
-        document.getElementById('section-charge').style.display   = mode === 'charge'   ? 'block' : 'none';
-        const phoneInput = document.getElementById('phone_number');
-        phoneInput.required = (mode === 'charge');
-    }
-
     document.querySelectorAll('.operator-card').forEach(card => {
         card.addEventListener('click', () => {
             document.querySelectorAll('.operator-card').forEach(c => c.classList.remove('selected'));
@@ -172,9 +101,8 @@
     });
 
     document.getElementById('payment-form').addEventListener('submit', function(e) {
-        const mode  = document.getElementById('payment_mode').value;
         const phone = document.getElementById('phone_number').value.trim();
-        if (mode === 'charge' && phone.length !== 9) {
+        if (phone.length !== 9) {
             e.preventDefault();
             alert('Veuillez saisir un numéro valide de 9 chiffres.');
             return;

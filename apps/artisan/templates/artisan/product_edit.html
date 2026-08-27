@@ -62,7 +62,7 @@
                 <h5 class="mb-4">Options de personnalisation (Cadres)</h5>
                 {{ frame_formset.management_form }}
                 <div class="table-responsive">
-                    <table class="table align-middle">
+                    <table class="table align-middle table-card-mobile">
                         <thead>
                             <tr>
                                 <th>Label</th>
@@ -78,6 +78,19 @@
                             <tr class="frame-form-row">
                                 {% for field in f_form.visible_fields %}
                                 <td>
+                                    {% if forloop.counter0 == 0 %}
+                                    <span class="d-block d-sm-none fw-bold text-muted small mb-1">Label</span>
+                                    {% elif forloop.counter0 == 1 %}
+                                    <span class="d-block d-sm-none fw-bold text-muted small mb-1">Dim.</span>
+                                    {% elif forloop.counter0 == 2 %}
+                                    <span class="d-block d-sm-none fw-bold text-muted small mb-1">Matière</span>
+                                    {% elif forloop.counter0 == 3 %}
+                                    <span class="d-block d-sm-none fw-bold text-muted small mb-1">Prix</span>
+                                    {% elif forloop.counter0 == 4 %}
+                                    <span class="d-block d-sm-none fw-bold text-muted small mb-1">Dispo</span>
+                                    {% elif forloop.counter0 == 5 %}
+                                    <span class="d-block d-sm-none fw-bold text-muted small mb-1">Suppr.</span>
+                                    {% endif %}
                                     {{ field }}
                                 </td>
                                 {% endfor %}

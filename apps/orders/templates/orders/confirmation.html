@@ -37,7 +37,7 @@
 
   <div class="alert alert-info border-0 mb-5" style="max-width: 600px; margin: 0 auto;">
     <i class="bi bi-info-circle me-2"></i>
-    <strong>Note :</strong> L'intégration du paiement <strong>Flutterwave</strong> sera disponible au <strong>Sprint 5</strong>. 
+    <strong>Note :</strong> Finalisez votre commande en payant via <strong>Mobile Money</strong> (MTN ou Orange).
     Vous recevrez un email de confirmation dès que le paiement sera validé.
   </div>
 
@@ -45,9 +45,9 @@
     <a href="{% url 'catalogue:listing' %}" class="btn btn-outline-primary px-5 py-3">
       Retour à l'accueil
     </a>
-    <button class="btn btn-primary px-5 py-3" disabled>
-      Payer maintenant (Sprint 5)
-    </button>
+    <a href="{% url 'payments:initiate' reference=order.reference %}" class="btn btn-primary px-5 py-3">
+      Payer maintenant
+    </a>
   </div>
 </div>
 {% endblock %}

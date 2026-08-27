@@ -14,8 +14,8 @@ from django.views.decorators.csrf import csrf_exempt
 
 from apps.orders.models import Order
 from .models import PaymentAttempt
-from .services import SharePayService, PaymentService
-from .exceptions import SharePayAPIError, DuplicatePaymentError, PaymentVerificationError
+from .services import MonetbilService, PaymentService
+from .exceptions import MonetbilAPIError, DuplicatePaymentError, PaymentVerificationError
 
 logger = logging.getLogger('apps.payments')
 
@@ -49,40 +49,40 @@ class InitiatePaymentView(LoginRequiredMixin, View):
         order = get_object_or_404(
             Order, reference=reference, user=request.user, status='pending'
         )
-        payment_mode   = request.POST.get('payment_mode', 'checkout')
         phone_number   = request.POST.get('phone_number', '').strip()
         payment_method = request.POST.get('payment_method', 'MTN_MOMO_CM')
 
+        if not phone_number:
+            messages.error(request, "Veuillez saisir votre numéro Mobile Money.")
+            return redirect('payments:initiate', reference=reference)
+
+        notify_url = request.build_absolute_uri(
+            reverse('payments:monetbil_notify')
+        )
+
         try:
-            if payment_mode == 'checkout':
-                attempt, payment_url = PaymentService.initiate_checkout(
-                    order, request.user
-                )
-                return redirect(payment_url)
-            else:
-                if not phone_number:
-                    messages.error(
-                        request, "Veuillez saisir votre numéro Mobile Money."
-                    )
-                    return redirect('payments:initiate', reference=reference)
-                PaymentService.initiate_charge(
-                    order=order,
-                    phone_number=phone_number,
-                    payment_method=payment_method,
-                    user=request.user,
-                )
-                return redirect('payments:pending', reference=order.reference)
+            PaymentService.initiate_payment(
+                order=order,
+                phone_number=phone_number,
+                payment_method=payment_method,
+                user=request.user,
+                notify_url=notify_url,
+            )
+            return redirect('payments:pending', reference=order.reference)
 
         except DuplicatePaymentError as e:
             messages.warning(request, str(e))
             return redirect('orders:confirmation', reference=reference)
-        except SharePayAPIError as e:
-            logger.error(f"Erreur API SharePay : {e}")
+        except MonetbilAPIError as e:
+            logger.error(f"Erreur API Monetbil : {e}")
             messages.error(request, "Impossible d'initier le paiement. Réessayez.")
             return render(request, self.template_name, {
                 'order': order,
                 'error': str(e)
             })
+        except ValueError as e:
+            messages.error(request, str(e))
+            return redirect('payments:initiate', reference=reference)
 
 
 class PaymentPendingView(LoginRequiredMixin, View):
@@ -105,62 +105,41 @@ class PaymentStatusView(LoginRequiredMixin, View):
         return JsonResponse(status)
 
 
-class SharePayWebhookView(View):
+class MonetbilNotifyView(View):
+    """Reçoit les notifications de paiement Monetbil (notify_url)."""
+
     @method_decorator(csrf_exempt)
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
 
     def post(self, request):
-        received_sig = request.headers.get('X-Sharepay-Signature', '')
-        if not SharePayService.verify_webhook_signature(request.body, received_sig):
-            logger.warning(
-                f"Webhook SharePay rejeté — signature invalide. "
-                f"IP: {request.META.get('REMOTE_ADDR')}"
-            )
-            return HttpResponse(status=401)
-
         try:
             payload = json.loads(request.body)
         except json.JSONDecodeError:
+            payload = request.POST.dict()
+
+        payment_id = payload.get('paymentId', '')
+        logger.info(f"Notification Monetbil reçue : paymentId={payment_id}")
+
+        if not payment_id:
             return HttpResponse(status=400)
 
-        event = payload.get('event', '')
-        logger.info(f"Webhook SharePay reçu : event={event}")
-
         try:
-            if event == 'payment.success':
-                PaymentService.handle_successful_webhook(payload)
-            elif event in ['payment.failed', 'payment.cancelled']:
-                PaymentService.handle_failed_webhook(payload)
-            elif event == 'webhook.test':
-                logger.info("Webhook test SharePay reçu — OK")
-
+            # Vérifie le statut réel auprès de Monetbil
+            verified = MonetbilService.check_payment(payment_id)
+            transaction = verified.get('transaction')
+            if transaction:
+                tx_status = int(transaction.get('status', 0))
+                if tx_status == 1:
+                    PaymentService.handle_successful_payment(payment_id, payload)
+                elif tx_status in (0, -1, -2):
+                    PaymentService.handle_failed_payment(payment_id, payload)
         except PaymentVerificationError as e:
             logger.error(f"Erreur vérification paiement : {e}")
         except Exception as e:
-            logger.exception(f"Erreur inattendue dans le webhook : {e}")
+            logger.exception(f"Erreur inattendue dans la notification : {e}")
 
         return HttpResponse(status=200)
-
-
-class PaymentCallbackView(View):
-    def get(self, request):
-        status = request.GET.get('status', '')
-        tx_ref = request.GET.get('tx_ref', '')
-
-        if not tx_ref:
-            return redirect('orders:cart')
-
-        try:
-            order = Order.objects.get(reference=tx_ref)
-        except Order.DoesNotExist:
-            return redirect('core:home')
-
-        if status == 'successful' or order.status == 'paid':
-            return redirect('payments:success', reference=order.reference)
-        else:
-            messages.warning(request, "Paiement non finalisé.")
-            return redirect('payments:failed', reference=order.reference)
 
 
 class PaymentSuccessView(LoginRequiredMixin, DetailView):
@@ -174,7 +153,7 @@ class PaymentSuccessView(LoginRequiredMixin, DetailView):
         return get_object_or_404(
             self.get_queryset(),
             reference=self.kwargs['reference'],
-            status__in=['paid', 'pending']  # ← corrigé aussi
+            status__in=['paid', 'pending']
         )
 
 

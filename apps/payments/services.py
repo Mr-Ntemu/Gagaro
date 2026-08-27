@@ -1,5 +1,3 @@
-import hmac
-import hashlib
 import re
 import logging
 import requests as http_requests
@@ -8,7 +6,7 @@ from django.db import transaction as db_transaction
 from django.utils import timezone
 from .models import PaymentAttempt
 from .exceptions import (
-    SharePayAPIError,
+    MonetbilAPIError,
     PaymentVerificationError,
     DuplicatePaymentError,
 )
@@ -16,111 +14,75 @@ from .exceptions import (
 logger = logging.getLogger('apps.payments')
 
 
-class SharePayService:
-    """Client bas niveau pour l'API SharePay."""
+class MonetbilService:
+    """Client bas niveau pour l'API Monetbil (Mobile Money)."""
 
-    BASE_URL   = settings.SHAREPAY_BASE_URL
-    API_KEY    = settings.SHAREPAY_API_KEY
+    BASE_URL = settings.MONETBIL_API_URL
+    SERVICE_KEY = settings.MONETBIL_SERVICE_KEY
+
+    # Opérateurs Cameroun
+    OPERATORS = {
+        'MTN_MOMO_CM': 'CM_MTNMOBILEMONEY',
+        'ORANGE_MONEY_CM': 'CM_ORANGEMONEY',
+    }
 
     @classmethod
-    def _get_headers(cls) -> dict:
-        return {
-            'Content-Type': 'application/json',
-            'X-API-KEY': cls.API_KEY,
+    def place_payment(cls, phone: str, amount: int, operator: str,
+                      order, user, notify_url: str) -> dict:
+        """
+        Initie une demande de paiement Mobile Money.
+        Retourne {paymentId, status, message, channel, ...}.
+        """
+        payload = {
+            'service':      cls.SERVICE_KEY,
+            'phonenumber':  phone,
+            'amount':       str(amount),
+            'operator':     operator,
+            'currency':     'XAF',
+            'country':      'CM',
+            'payment_ref':  order.reference,
+            'item_ref':     order.reference,
+            'user':         user.email,
+            'first_name':   user.first_name or '',
+            'last_name':    user.last_name or '',
+            'email':        user.email,
+            'notify_url':   notify_url,
         }
-
-    @classmethod
-    def create_checkout(cls, order, user) -> dict:
-        """
-        Checkout : génère un lien de paiement SharePay.
-        L'utilisateur choisit son opérateur sur la page hébergée.
-        """
         try:
             response = http_requests.post(
-                f"{cls.BASE_URL}/api/v1/pay-in/checkout",
-                json={
-                    'amount':            int(order.total_amount),
-                    'currency':          'XAF',
-                    'merchantReference': order.reference,
-                    'description':       f"Commande Gagaro #{order.reference}",
-                    'successUrl': f"{settings.SITE_URL}/paiement/succes/{order.reference}/",
-                    'cancelUrl':  f"{settings.SITE_URL}/paiement/echec/{order.reference}/",
-                },
-                headers=cls._get_headers(),
+                f"{cls.BASE_URL}placePayment",
+                json=payload,
                 timeout=30,
             )
             data = response.json()
-            if not data.get('success'):
-                raise SharePayAPIError(
-                    message=data.get('message', 'Erreur SharePay'),
+            if data.get('status') != 'REQUEST_ACCEPTED':
+                raise MonetbilAPIError(
+                    message=data.get('message', 'Erreur Monetbil'),
                     status_code=response.status_code,
                     response=data,
                 )
-            return data['data']  # {reference, status, paymentUrl}
+            return data  # {status, message, channel, paymentId, ...}
 
         except http_requests.exceptions.Timeout:
-            raise SharePayAPIError("Timeout : SharePay ne répond pas.")
+            raise MonetbilAPIError("Timeout : Monetbil ne répond pas.")
         except http_requests.exceptions.ConnectionError:
-            raise SharePayAPIError("Connexion impossible à SharePay.")
+            raise MonetbilAPIError("Connexion impossible à Monetbil.")
 
     @classmethod
-    def create_charge(cls, phone: str, payment_method: str, order, user) -> dict:
-        """
-        Charge directe : débit Mobile Money sans page intermédiaire.
-        """
+    def check_payment(cls, payment_id: str) -> dict:
+        """Vérifie le statut d'un paiement auprès de Monetbil."""
         try:
             response = http_requests.post(
-                f"{cls.BASE_URL}/api/v1/pay-in/charge",
-                json={
-                    'amount':           int(order.total_amount),
-                    'currency':         'XAF',
-                    'paymentMethod':    payment_method,  # MTN_MOMO_CM ou ORANGE_MONEY_CM
-                    'payerAccount':     phone,
-                    'payerName':        user.get_full_name(),
-                    'payerEmail':       user.email,
-                    'merchantReference': order.reference,
-                    'description':      f"Commande Gagaro #{order.reference}",
-                    'idempotencyKey':   f"idem-{order.reference}-v1",
-                },
-                headers=cls._get_headers(),
-                timeout=30,
+                f"{cls.BASE_URL}checkPayment",
+                json={'paymentId': payment_id},
+                timeout=15,
             )
-            data = response.json()
-            if not data.get('success'):
-                raise SharePayAPIError(
-                    message=data.get('message', 'Erreur SharePay'),
-                    status_code=response.status_code,
-                    response=data,
-                )
-            return data['data']  # {reference, status, paymentMethod, ...}
+            return response.json()  # {paymentId, message, transaction?}
 
         except http_requests.exceptions.Timeout:
-            raise SharePayAPIError("Timeout : SharePay ne répond pas.")
+            raise MonetbilAPIError("Timeout : Monetbil ne répond pas.")
         except http_requests.exceptions.ConnectionError:
-            raise SharePayAPIError("Connexion impossible à SharePay.")
-
-    @classmethod
-    def check_status(cls, sharepay_reference: str) -> dict:
-        """Vérifier le statut d'un paiement auprès de SharePay."""
-        response = http_requests.get(
-            f"{cls.BASE_URL}/api/v1/pay-in/check_status/{sharepay_reference}",
-            headers=cls._get_headers(),
-            timeout=15,
-        )
-        data = response.json()
-        if not data.get('success'):
-            raise SharePayAPIError(data.get('message', 'Erreur vérification'))
-        return data['data']  # {reference, status, amount, currency, ...}
-
-    @classmethod
-    def verify_webhook_signature(cls, request_body: bytes, received_sig: str) -> bool:
-        """Vérifie la signature HMAC-SHA256 du webhook SharePay."""
-        expected = hmac.new(
-            settings.SHAREPAY_WEBHOOK_SECRET.encode(),
-            request_body,
-            hashlib.sha256,
-        ).hexdigest()
-        return hmac.compare_digest(received_sig, expected)
+            raise MonetbilAPIError("Connexion impossible à Monetbil.")
 
 
 class PaymentService:
@@ -137,38 +99,10 @@ class PaymentService:
         return clean
 
     @staticmethod
-    def initiate_checkout(order, user) -> tuple:
+    def initiate_payment(order, phone_number: str, payment_method: str,
+                         user, notify_url: str) -> PaymentAttempt:
         """
-        Mode Checkout : redirige vers la page SharePay.
-        Retourne (attempt, payment_url).
-        """
-        if order.status != 'pending':
-            raise DuplicatePaymentError(
-                f"La commande {order.reference} n'est pas en attente."
-            )
-        if order.payment_attempts.filter(status='success').exists():
-            raise DuplicatePaymentError(
-                f"La commande {order.reference} est déjà payée."
-            )
-
-        sp_data = SharePayService.create_checkout(order, user)
-
-        attempt = PaymentAttempt.objects.create(
-            order              = order,
-            user               = user,
-            flw_tx_ref         = sp_data['reference'],   # référence SharePay
-            amount             = order.total_amount,
-            currency           = 'XAF',
-            payment_method     = 'checkout',
-            status             = PaymentAttempt.AttemptStatus.PENDING,
-            flw_init_response  = sp_data,
-        )
-        return attempt, sp_data['paymentUrl']
-
-    @staticmethod
-    def initiate_charge(order, phone_number: str, payment_method: str, user) -> PaymentAttempt:
-        """
-        Mode Charge directe : débit Mobile Money immédiat.
+        Initie un paiement Mobile Money via Monetbil.
         payment_method : 'MTN_MOMO_CM' ou 'ORANGE_MONEY_CM'
         """
         if order.status != 'pending':
@@ -181,69 +115,77 @@ class PaymentService:
             )
 
         clean_phone = PaymentService._clean_phone(phone_number)
-        sp_data     = SharePayService.create_charge(
+        operator = MonetbilService.OPERATORS.get(
+            payment_method, 'CM_MTNMOBILEMONEY'
+        )
+
+        mb_data = MonetbilService.place_payment(
             phone=clean_phone,
-            payment_method=payment_method,
+            amount=int(order.total_amount),
+            operator=operator,
             order=order,
             user=user,
+            notify_url=notify_url,
         )
 
         attempt = PaymentAttempt.objects.create(
-            order              = order,
-            user               = user,
-            flw_tx_ref         = sp_data['reference'],
-            amount             = order.total_amount,
-            currency           = 'XAF',
-            payment_method     = payment_method,
-            phone_number       = clean_phone,
-            status             = PaymentAttempt.AttemptStatus.PENDING,
-            flw_init_response  = sp_data,
+            order            = order,
+            user             = user,
+            mb_payment_id    = str(mb_data['paymentId']),
+            amount           = order.total_amount,
+            currency         = 'XAF',
+            payment_method   = payment_method,
+            phone_number     = clean_phone,
+            status           = PaymentAttempt.AttemptStatus.PROCESSING,
+            mb_init_response = mb_data,
         )
         return attempt
 
     @staticmethod
     @db_transaction.atomic
-    def handle_successful_webhook(webhook_data: dict) -> None:
-        """Traite un webhook payment.success de SharePay."""
-        data      = webhook_data.get('data', {})
-        sp_ref    = data.get('reference', '')
-        event     = webhook_data.get('event', '')
-
+    def handle_successful_payment(payment_id: str, webhook_data: dict = None) -> None:
+        """Confirme un paiement réussi (via webhook ou polling)."""
         try:
             attempt = PaymentAttempt.objects.select_related(
                 'order', 'user'
-            ).get(flw_tx_ref=sp_ref)
+            ).get(mb_payment_id=payment_id)
         except PaymentAttempt.DoesNotExist:
-            logger.warning(f"Webhook reçu pour référence inconnue : {sp_ref}")
+            logger.warning(f"Paiement reçu pour ID inconnu : {payment_id}")
             return
 
         # Idempotence
         if attempt.status == PaymentAttempt.AttemptStatus.SUCCESS:
             return
 
-        # Vérification stricte côté SharePay
-        verified = SharePayService.check_status(sp_ref)
-        if verified.get('status') != 'SUCCESS':
+        # Vérification stricte côté Monetbil
+        verified = MonetbilService.check_payment(payment_id)
+        transaction = verified.get('transaction')
+        if not transaction:
             raise PaymentVerificationError(
-                f"Statut SharePay invalide pour {sp_ref} : {verified.get('status')}"
+                f"Transaction absente pour {payment_id}."
             )
-        if int(verified.get('amount', 0)) != int(attempt.amount):
+        if int(transaction.get('status', 0)) != 1:
             raise PaymentVerificationError(
-                f"Montant invalide pour {sp_ref}."
+                f"Statut Monetbil invalide pour {payment_id} : "
+                f"{transaction.get('status')}"
+            )
+        if int(transaction.get('amount', 0)) != int(attempt.amount):
+            raise PaymentVerificationError(
+                f"Montant invalide pour {payment_id}."
             )
 
         now = timezone.now()
         attempt.status              = PaymentAttempt.AttemptStatus.SUCCESS
-        attempt.flw_transaction_id  = sp_ref
-        attempt.flw_webhook_payload = webhook_data
-        attempt.flw_verify_response = verified
+        attempt.mb_transaction_id   = str(transaction.get('transaction_UUID', ''))
+        attempt.mb_webhook_payload  = webhook_data
+        attempt.mb_verify_response  = verified
         attempt.confirmed_at        = now
         attempt.save()
 
         order = attempt.order
         order.status            = 'paid'
         order.payment_method    = attempt.payment_method
-        order.payment_reference = sp_ref
+        order.payment_reference = payment_id
         order.paid_at           = now
         order.save(update_fields=[
             'status', 'payment_method', 'payment_reference', 'paid_at', 'updated_at'
@@ -254,7 +196,7 @@ class PaymentService:
             order      = order,
             old_status = 'pending',
             new_status = 'paid',
-            note       = f"Paiement confirmé via SharePay. Réf : {sp_ref}",
+            note       = f"Paiement confirmé via Monetbil. ID : {payment_id}",
         )
 
         PaymentService._decrement_stock(order)
@@ -262,15 +204,17 @@ class PaymentService:
         logger.info(f"Paiement réussi pour la commande {order.reference}")
 
     @staticmethod
-    def handle_failed_webhook(webhook_data: dict) -> None:
-        """Traite un webhook payment.failed ou payment.cancelled."""
-        sp_ref = webhook_data.get('data', {}).get('reference', '')
+    def handle_failed_payment(payment_id: str, webhook_data: dict = None) -> None:
+        """Marque un paiement comme échoué/annulé."""
         try:
-            attempt = PaymentAttempt.objects.get(flw_tx_ref=sp_ref)
-            if attempt.status == PaymentAttempt.AttemptStatus.PENDING:
-                attempt.status              = PaymentAttempt.AttemptStatus.FAILED
-                attempt.flw_webhook_payload = webhook_data
-                attempt.save(update_fields=['status', 'flw_webhook_payload'])
+            attempt = PaymentAttempt.objects.get(mb_payment_id=payment_id)
+            if attempt.status in [
+                PaymentAttempt.AttemptStatus.PENDING,
+                PaymentAttempt.AttemptStatus.PROCESSING,
+            ]:
+                attempt.status             = PaymentAttempt.AttemptStatus.FAILED
+                attempt.mb_webhook_payload = webhook_data
+                attempt.save(update_fields=['status', 'mb_webhook_payload'])
         except PaymentAttempt.DoesNotExist:
             pass
 
@@ -279,6 +223,29 @@ class PaymentService:
         latest = order.payment_attempts.order_by('-initiated_at').first()
         if not latest:
             return {'status': 'none', 'message': 'Aucun paiement initié'}
+
+        # Si pas encore confirmé, interroge Monetbil en direct
+        if latest.status in [
+            PaymentAttempt.AttemptStatus.PROCESSING,
+            PaymentAttempt.AttemptStatus.PENDING,
+        ]:
+            try:
+                verified = MonetbilService.check_payment(latest.mb_payment_id)
+                transaction = verified.get('transaction')
+                if transaction:
+                    tx_status = int(transaction.get('status', 0))
+                    if tx_status == 1:
+                        PaymentService.handle_successful_payment(
+                            latest.mb_payment_id, verified
+                        )
+                    elif tx_status in (0, -1, -2):
+                        PaymentService.handle_failed_payment(
+                            latest.mb_payment_id, verified
+                        )
+            except Exception as e:
+                logger.warning(f"Polling Monetbil échoué : {e}")
+
+        latest.refresh_from_db()
         return {
             'status':       latest.status,
             'message':      latest.get_status_display(),

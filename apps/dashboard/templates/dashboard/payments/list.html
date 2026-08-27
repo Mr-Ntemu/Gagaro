@@ -47,7 +47,7 @@
             <tbody>
                 {% for p in payments %}
                 <tr>
-                    <td class="ps-4"><code class="small">{{ p.flw_tx_ref|truncatechars:25 }}</code></td>
+                    <td class="ps-4"><code class="small">{{ p.mb_payment_id|truncatechars:25 }}</code></td>
                     <td class="small">{{ p.user.email }}</td>
                     <td class="small fw-bold">{{ p.order.reference }}</td>
                     <td class="small fw-bold">{{ p.amount|floatformat:0 }} {{ p.currency }}</td>
