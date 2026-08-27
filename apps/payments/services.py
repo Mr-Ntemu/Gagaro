@@ -54,7 +54,13 @@ class MonetbilService:
                 json=payload,
                 timeout=30,
             )
-            data = response.json()
+            try:
+                data = response.json()
+            except ValueError as exc:
+                raise MonetbilAPIError(
+                    "Réponse invalide reçue de Monetbil.",
+                    status_code=response.status_code,
+                ) from exc
             if data.get('status') != 'REQUEST_ACCEPTED':
                 raise MonetbilAPIError(
                     message=data.get('message', 'Erreur Monetbil'),
@@ -74,10 +80,16 @@ class MonetbilService:
         try:
             response = http_requests.post(
                 f"{cls.BASE_URL}checkPayment",
-                json={'paymentId': payment_id},
+                data={'paymentId': payment_id},
                 timeout=15,
             )
-            return response.json()  # {paymentId, message, transaction?}
+            try:
+                return response.json()  # {paymentId, message, transaction?}
+            except ValueError as exc:
+                raise MonetbilAPIError(
+                    "Réponse invalide reçue de Monetbil.",
+                    status_code=response.status_code,
+                ) from exc
 
         except http_requests.exceptions.Timeout:
             raise MonetbilAPIError("Timeout : Monetbil ne répond pas.")
@@ -128,10 +140,16 @@ class PaymentService:
             notify_url=notify_url,
         )
 
+        payment_id = mb_data.get('paymentId')
+        if not payment_id:
+            raise MonetbilAPIError(
+                "Monetbil n’a pas retourné d’identifiant de paiement."
+            )
+
         attempt = PaymentAttempt.objects.create(
             order            = order,
             user             = user,
-            mb_payment_id    = str(mb_data['paymentId']),
+            mb_payment_id    = str(payment_id),
             amount           = order.total_amount,
             currency         = 'XAF',
             payment_method   = payment_method,

@@ -3,7 +3,7 @@
  */
 
 const POLL_INTERVAL_MS = 5000;
-const MAX_DURATION_MS  = 1 * 60 * 1000;  // 1 minute
+const MAX_DURATION_MS  = 5 * 60 * 1000;  // 5 minutes
 let   startTime        = Date.now();
 let   pollInterval     = null;
 
@@ -26,7 +26,7 @@ async function checkPaymentStatus() {
         const data = await response.json();
 
         // Normalise le statut en minuscules pour comparaison uniforme
-        // (Django renvoie 'success'/'failed', SharePay renvoie 'SUCCESS'/'FAILED')
+        // Normalise les statuts quelle que soit leur casse.
         const status      = (data.status || '').toLowerCase();
         const orderStatus = (data.order_status || '').toLowerCase();
 
