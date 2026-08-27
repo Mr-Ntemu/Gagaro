@@ -1,5 +1,6 @@
 import re
 import logging
+import uuid
 import requests as http_requests
 from django.conf import settings
 from django.db import transaction as db_transaction
@@ -28,7 +29,8 @@ class MonetbilService:
 
     @classmethod
     def place_payment(cls, phone: str, amount: int, operator: str,
-                      order, user, notify_url: str) -> dict:
+                      order, user, notify_url: str,
+                      payment_ref: str = None) -> dict:
         """
         Initie une demande de paiement Mobile Money.
         Retourne {paymentId, status, message, channel, ...}.
@@ -40,7 +42,7 @@ class MonetbilService:
             'operator':     operator,
             'currency':     'XAF',
             'country':      'CM',
-            'payment_ref':  order.reference,
+            'payment_ref':  payment_ref or order.reference,
             'item_ref':     order.reference,
             'user':         user.email,
             'first_name':   user.first_name or '',
@@ -130,6 +132,7 @@ class PaymentService:
         operator = MonetbilService.OPERATORS.get(
             payment_method, 'CM_MTNMOBILEMONEY'
         )
+        payment_ref = f'{order.reference}-{uuid.uuid4().hex[:8].upper()}'
 
         mb_data = MonetbilService.place_payment(
             phone=clean_phone,
@@ -138,6 +141,7 @@ class PaymentService:
             order=order,
             user=user,
             notify_url=notify_url,
+            payment_ref=payment_ref,
         )
 
         payment_id = mb_data.get('paymentId')
