@@ -3,14 +3,14 @@
  */
 
 const POLL_INTERVAL_MS = 5000;
-const MAX_DURATION_MS  = 5 * 60 * 1000;  // 5 minutes
+const MAX_DURATION_MS  = 2 * 60 * 1000;  // 2 minutes
 let   startTime        = Date.now();
 let   pollInterval     = null;
 
 async function checkPaymentStatus() {
     const elapsed = Date.now() - startTime;
 
-    // Timeout côté client après 1 minute
+    // Timeout côté client après 2 minutes
     if (elapsed >= MAX_DURATION_MS) {
         clearInterval(pollInterval);
         showTimeoutMessage();
@@ -25,7 +25,6 @@ async function checkPaymentStatus() {
         });
         const data = await response.json();
 
-        // Normalise le statut en minuscules pour comparaison uniforme
         // Normalise les statuts quelle que soit leur casse.
         const status      = (data.status || '').toLowerCase();
         const orderStatus = (data.order_status || '').toLowerCase();

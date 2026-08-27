@@ -90,8 +90,13 @@ class PaymentPendingView(LoginRequiredMixin, View):
 
     def get(self, request, reference: str):
         order = get_object_or_404(Order, reference=reference, user=request.user)
+        attempt = order.payment_attempts.first()
+        init_response = attempt.mb_init_response if attempt else {}
         return render(request, self.template_name, {
             'order':       order,
+            'payment_ussd': init_response.get('channel_ussd', ''),
+            'payment_channel': init_response.get('channel_name', ''),
+            'payment_phone': attempt.phone_number if attempt else '',
             'poll_url':    reverse('payments:status',  kwargs={'reference': reference}),
             'success_url': reverse('payments:success', kwargs={'reference': reference}),
             'failed_url':  reverse('payments:failed',  kwargs={'reference': reference}),

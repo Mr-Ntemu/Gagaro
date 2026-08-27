@@ -24,7 +24,7 @@
         <div class="timer-bar">
             <div class="timer-fill" id="timer-fill"></div>
         </div>
-        <p class="timer-text mb-5" id="timer-text">Expire dans 5:00</p>
+        <p class="timer-text mb-5" id="timer-text">Expire dans 2:00</p>
 
         <div class="status-indicator d-flex align-items-center justify-content-center gap-3" id="status-indicator">
             <div class="spinner-border text-secondary" role="status" style="width: 1.5rem; height: 1.5rem;"></div>
@@ -36,6 +36,39 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="mobilePaymentModal" tabindex="-1"
+     aria-labelledby="mobilePaymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content text-start">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mobilePaymentModalLabel">
+                    Paiement sur votre téléphone
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                        aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">
+                    Une demande de paiement a été envoyée sur votre téléphone
+                    <strong>{{ payment_phone }}</strong>.
+                </p>
+                {% if payment_ussd %}
+                <p class="small text-muted mb-2">
+                    Si aucune notification n'apparaît, composez ce code :
+                </p>
+                <div class="text-center fs-4 fw-bold mb-3">{{ payment_ussd }}</div>
+                <a href="#" id="ussd-link" class="btn btn-secondary w-100">
+                    <i class="bi bi-phone me-2"></i>Ouvrir le paiement
+                </a>
+                {% endif %}
+                <p class="small text-muted mt-3 mb-0">
+                    Validez le paiement dans les <strong>2 minutes</strong>.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -43,6 +76,20 @@
     const pollUrl = "{{ poll_url }}";
     const successUrl = "{{ success_url }}";
     const failedUrl = "{{ failed_url }}";
+    const paymentUssd = "{{ payment_ussd|escapejs }}";
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const modalElement = document.getElementById('mobilePaymentModal');
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
+
+        const ussdLink = document.getElementById('ussd-link');
+        if (ussdLink && paymentUssd) {
+            ussdLink.href = `tel:${encodeURIComponent(paymentUssd)}`;
+        }
+    });
 </script>
 <script src="{% static 'js/payment-polling.js' %}"></script>
 {% endblock %}
