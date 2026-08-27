@@ -3,14 +3,14 @@
  */
 
 const POLL_INTERVAL_MS = 5000;
-const MAX_DURATION_MS  = 5 * 60 * 1000;  // 5 minutes
+const MAX_DURATION_MS  = 1 * 60 * 1000;  // 1 minute
 let   startTime        = Date.now();
 let   pollInterval     = null;
 
 async function checkPaymentStatus() {
     const elapsed = Date.now() - startTime;
 
-    // Timeout côté client après 5 minutes
+    // Timeout côté client après 1 minute
     if (elapsed >= MAX_DURATION_MS) {
         clearInterval(pollInterval);
         showTimeoutMessage();
